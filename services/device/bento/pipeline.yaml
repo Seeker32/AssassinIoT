@@ -1,0 +1,62 @@
+http:
+  enabled: false
+
+logger:
+  level: ${BENTO_LOG_LEVEL:INFO}
+  format: json
+
+input:
+  mqtt:
+    urls: ["${MQTT_URL:tcp://emqx:1883}"]
+    topics: ["device/+/telemetry"]
+    qos: 0
+    client_id: bento-pipeline
+    clean_session: true
+    connect_timeout: 30s
+    auto_replay_nacks: true
+    keepalive: 60
+
+pipeline:
+  processors:
+    # 1. 从 MQTT topic 中提取 dev_id（device/{dev_id}/telemetry）
+    - mapping: |
+        root = this
+        root.meta = {}
+        let t = meta("mqtt_topic").or("//")
+        let parts = $t.split("/")
+        root.meta.topic = $t
+        root.meta.dev_id = $parts.1.or("")
+
+    # 2. 解析 JSON 负载，注入 topic 中的 dev_id
+    - mapping: |
+        root = this.parse_json().or({})
+        root.meta = this.meta
+        root.dev_id = this.meta.dev_id
+        root.tenant_key = this.tenant_key.or("")
+        root.received_at = now()
+
+    # 3) 校验必需字段，丢弃无效消息
+    - mapping: |
+        let valid = this.dev_id.length() > 0
+        root = if ! $valid { deleted() } else { this }
+
+    # 4) 时间戳归一化（统一为毫秒）
+    - mapping: |
+        root.ts = this.ts.or(timestamp_unix_milli())
+        root = this
+
+output:
+  fallback:
+    - sql_insert:
+        driver: postgres
+        dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
+        table: telemetry_data
+        columns: [time, dev_id, tenant_key, payload]
+        args_mapping: |
+          root = [
+            this.ts,
+            this.dev_id,
+            this.tenant_key,
+            this.telemetry.or({})
+          ]
+    - reject: "遥测数据写入失败, dev_id=${! this.dev_id }"
