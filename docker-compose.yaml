@@ -1,0 +1,57 @@
+networks:
+  iot-bridge:
+    driver: bridge
+
+services:
+  database:
+    image: timescale/timescaledb:2.22.1-pg17
+    container_name: database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - 15432:5432
+    networks:
+      - iot-bridge
+
+  emqx:
+    image: emqx/emqx:5.8.5
+    container_name: emqx
+    environment:
+      EMQX_NODE__NAME: emqx@127.0.0.1
+    ports:
+      - 1883:1883
+      - 8083:8083
+      - 18083:18083
+    volumes:
+      - ./services/emqx/etc/emqx.conf:/opt/emqx/etc/emqx.conf
+      - ./services/emqx/etc/acl.conf:/opt/emqx/etc/acl.conf
+      - ./services/emqx/etc/certs:/opt/emqx/etc/certs
+      - ./services/emqx/data:/opt/emqx/data
+      - ./services/emqx/log:/opt/emqx/log
+    restart: unless-stopped
+    networks:
+      - iot-bridge
+
+  bento:
+    image: ghcr.io/warpstreamlabs/bento:1.17.0
+    container_name: bento
+    volumes:
+      - ./services/device/bento/pipeline.yaml:/bento.yaml
+    env_file:
+      - ./services/device/bento/.env
+    command:
+      - -c
+      - /bento.yaml
+    restart: unless-stopped
+    depends_on:
+      - database
+      - emqx
+    networks:
+      - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 60M

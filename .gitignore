@@ -1,0 +1,8 @@
+.vscode
+.superpowers
+
+.env
+
+docs/
+services/emqx/data
+services/emqx/log
