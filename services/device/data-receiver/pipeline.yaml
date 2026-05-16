@@ -1,0 +1,117 @@
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+
+logger:
+  level: ${BENTO_LOG_LEVEL:DEBUG}
+  format: logfmt
+  add_timestamp: true
+  static_fields:
+    '@service': data-receiver
+
+metrics:
+  prometheus:
+    use_histogram_timing: false
+  mapping: |
+    root = if ![
+      "input_latency_ns",
+      "processor_error",
+      "processor_latency_ns",
+      "output_error",
+      "output_latency_ns",
+    ].contains(this) { deleted() }
+
+input:
+  label: "mqtt_input"
+  mqtt:
+    urls: ["${MQTT_URL:tcp://emqx:1883}"]
+    topics: ["device/+/telemetry"]
+    qos: 0
+    user: "${MQTT_USER}"
+    password: "${MQTT_PASSWORD}"
+    client_id: data-receiver
+    clean_session: true
+    connect_timeout: 10s
+    auto_replay_nacks: true
+    keepalive: 60
+
+pipeline:
+  label: "telemetry_processor"
+  processors:
+    # 1. 解析 topic 和 JSON 负载，生成属性明细数组。
+    - mapping: |
+        let t = metadata("mqtt_topic").or("//")
+        let parts = $t.split("/")
+        let dev_id = $parts.1.or("")
+        let payload = this
+        let received_at = now().ts_strftime("%Y-%m-%dT%H:%M:%S.%fZ", "UTC")
+        # 优先使用 payload.ts 作为上报时间
+        let time = if $payload.type() != "object" {
+          $received_at
+        } else if $payload.ts.type() == "number" {
+          ($payload.ts / 1000.0).ts_strftime("%Y-%m-%dT%H:%M:%S.%fZ", "UTC")
+        } else if $payload.ts.type() == "string" {
+          $payload.ts.ts_strftime("%Y-%m-%dT%H:%M:%S.%fZ", "UTC")
+        } else {
+          $received_at
+        }
+        root = if $dev_id.length() == 0 || $payload.type() != "object" {
+          deleted()
+        } else {
+          $payload.key_values().
+            filter(item -> !["ts"].contains(item.key)).
+            map_each(item -> {
+              "time": $time,
+              "device_identifier": $dev_id,
+              "property_name": item.key,
+              "value_type": if item.value.type() == "number" {
+                "number"
+              } else if item.value.type() == "string" {
+                "string"
+              } else if item.value.type() == "bool" {
+                "bool"
+              } else if ["array", "object"].contains(item.value.type()) {
+                "json"
+              } else {
+                "null"
+              },
+              "value_number": if item.value.type() == "number" { item.value } else { null },
+              "value_string": if item.value.type() == "string" { item.value } else { null },
+              "value_bool": if item.value.type() == "bool" { item.value } else { null },
+              "value_json": if ["array", "object"].contains(item.value.type()) { item.value } else { null },
+              "received_at": $received_at
+            })
+        }
+
+    # 2. 将属性数组拆成消息批次，每个属性一条消息。
+    - unarchive:
+        format: json_array
+
+output:
+  label: "telemetry_output"
+  sql_insert:
+    driver: postgres
+    dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
+    table: device_telemetry
+    columns:
+      - time
+      - device_identifier
+      - property_name
+      - value_type
+      - value_number
+      - value_string
+      - value_bool
+      - value_json
+      - received_at
+    args_mapping: |
+      root = [
+        this.time,
+        this.device_identifier,
+        this.property_name,
+        this.value_type,
+        this.value_number,
+        this.value_string,
+        this.value_bool,
+        this.value_json,
+        this.received_at
+      ]
