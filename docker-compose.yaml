@@ -71,6 +71,7 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+      - 15692:15692
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
       - ./services/rabbitmq/log:/var/log/rabbitmq
@@ -102,8 +103,8 @@ services:
       - /bento.yaml
     restart: unless-stopped
     depends_on:
-      - database
       - emqx
+      - rabbitmq
     logging:
       driver: "json-file"
       options:
@@ -115,7 +116,36 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 60M
+          memory: 70M
+
+  device-data-insert:
+    image: ghcr.io/warpstreamlabs/bento:1.17.0
+    container_name: device-data-insert
+    ports:
+      - "4196:4195"
+    volumes:
+      - ./services/device/data-insert/pipeline.yaml:/bento.yaml
+    env_file:
+      - ./services/device/data-insert/.env
+    command:
+      - -c
+      - /bento.yaml
+    restart: unless-stopped
+    depends_on:
+      - database
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 70M
 
   prometheus:
     image: prom/prometheus:v3.5.3
