@@ -12,6 +12,7 @@ logger:
 metrics:
   prometheus:
     use_histogram_timing: true
+    histogram_buckets: [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5]
   mapping: |
     root = if ![
       "input_latency_ns",
@@ -120,48 +121,16 @@ pipeline:
           mapping: |
             root = deleted()
 
-    # 3. 将属性数组拆成消息批次，每个属性一条消息。
-    - label: "split_telemetry_batch"
-      unarchive:
-        format: json_array
-
-    - label: "handle_batch_expansion_errors"
-      catch:
-        - label: "log_batch_expansion_error"
-          log:
-            level: ERROR
-            message: 'Telemetry batch expansion failed: topic=${!metadata("mqtt_topic")} dev_id=${!metadata("device_identifier")} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
-        - label: "delete_batch_expansion_error_message"
-          mapping: |
-            root = deleted()
-
 output:
-  label: "telemetry_output"
-  fallback:
-    - sql_insert:
-        driver: postgres
-        dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
-        table: device_telemetry
-        columns:
-          - time
-          - device_identifier
-          - property_name
-          - value_type
-          - value_number
-          - value_string
-          - value_bool
-          - value_json
-          - received_at
-        args_mapping: |
-          root = [
-            this.time,
-            this.device_identifier,
-            this.property_name,
-            this.value_type,
-            this.value_number,
-            this.value_string,
-            this.value_bool,
-            this.value_json,
-            this.received_at
-          ]
-    - reject: 'Telemetry write failed: dev_id=${!this.device_identifier} property=${!this.property_name} time=${!this.time} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
+  label: "rabbitmq_output"
+  amqp_0_9:
+    urls: [${RABBITMQ_URL}]
+    exchange: ${PROJECT_NAME}.${RABBITMQ_EXCHANGE}
+    exchange_declare:
+      enabled: true
+      type: topic
+      durable: true
+    key: ${RABBITMQ_QUEUE_TYPE}
+    persistent: true
+    metadata:
+      exclude_prefixes: []

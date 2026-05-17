@@ -1,0 +1,89 @@
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+
+logger:
+  level: ${BENTO_LOG_LEVEL:DEBUG}
+  format: logfmt
+  add_timestamp: true
+  static_fields:
+    '@service': data-insert
+
+metrics:
+  prometheus:
+    use_histogram_timing: true
+    histogram_buckets: [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5]
+  mapping: |
+    root = if ![
+      "input_latency_ns",
+      "processor_error",
+      "processor_latency_ns",
+      "output_error",
+      "output_latency_ns",
+    ].contains(this) { deleted() }
+
+input:
+  label: "rabbitmq_input"
+  amqp_0_9:
+    urls: [${RABBITMQ_URL}]
+    queue: ${PROJECT_NAME}.${RABBITMQ_EXCHANGE}.${RABBITMQ_QUEUE_TYPE}
+    queue_declare:
+      enabled: true
+      durable: true
+      auto_delete: false
+    bindings_declare:
+      - exchange: ${PROJECT_NAME}.${RABBITMQ_EXCHANGE}
+        key: ${RABBITMQ_QUEUE_TYPE}
+    consumer_tag: "${PROJECT_NAME}_data_insert_consumer"
+    prefetch_count: 40
+    
+pipeline:
+  processors:
+    # 将 RabbitMQ 中的 JSON 数组拆成单条消息，每条对应一个属性。
+    - label: "split_telemetry_batch"
+      unarchive:
+        format: json_array
+
+    - label: "handle_batch_expansion_errors"
+      catch:
+        - label: "log_batch_expansion_error"
+          log:
+            level: ERROR
+            message: 'Telemetry batch expansion failed: error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
+        - label: "delete_batch_expansion_error_message"
+          mapping: |
+            root = deleted()
+
+output:
+  label: "telemetry_output"
+  fallback:
+    - sql_insert:
+        driver: postgres
+        dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
+        table: device_telemetry
+        columns:
+          - time
+          - device_identifier
+          - property_name
+          - value_type
+          - value_number
+          - value_string
+          - value_bool
+          - value_json
+          - received_at
+        args_mapping: |
+          root = [
+            this.time,
+            this.device_identifier,
+            this.property_name,
+            this.value_type,
+            this.value_number,
+            this.value_string,
+            this.value_bool,
+            this.value_json,
+            this.received_at
+          ]
+        batching:
+          count: 100
+          period: "50ms"
+    - reject: 'Telemetry write failed: dev_id=${!this.device_identifier} property=${!this.property_name} time=${!this.time} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
