@@ -1,8 +1,9 @@
 .vscode
 .superpowers
+.venv
 
 .env
 
-docs/
 services/emqx/data
 services/emqx/log
+services/rabbitmq/data

@@ -1,10 +1,16 @@
+volumes:
+  pgdata:
+  prometheus-data:
+  grafana-storage:
+  rabbitmq-data:
+
 networks:
   iot-bridge:
     driver: bridge
 
 services:
   database:
-    image: timescale/timescaledb:2.22.1-pg17
+    image: timescale/timescaledb:2.27.0-pg17
     container_name: database
     environment:
       POSTGRES_USER: postgres
@@ -12,8 +18,20 @@ services:
       POSTGRES_DB: postgres
     ports:
       - 15432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
 
   emqx:
     image: emqx/emqx:5.8.5
@@ -31,16 +49,54 @@ services:
       - ./services/emqx/data:/opt/emqx/data
       - ./services/emqx/log:/opt/emqx/log
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 800M
 
-  bento:
-    image: ghcr.io/warpstreamlabs/bento:1.17.0
-    container_name: bento
+  rabbitmq:
+    image: rabbitmq:4.2.6-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - 5672:5672
+      - 15672:15672
     volumes:
-      - ./services/device/bento/pipeline.yaml:/bento.yaml
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./services/rabbitmq/log:/var/log/rabbitmq
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
+
+  device-data-receiver:
+    image: ghcr.io/warpstreamlabs/bento:1.17.0
+    container_name: device-data-receiver
+    ports:
+      - "4195:4195"
+    volumes:
+      - ./services/device/data-receiver/pipeline.yaml:/bento.yaml
     env_file:
-      - ./services/device/bento/.env
+      - ./services/device/data-receiver/.env
     command:
       - -c
       - /bento.yaml
@@ -48,6 +104,11 @@ services:
     depends_on:
       - database
       - emqx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - iot-bridge
     deploy:
@@ -55,3 +116,54 @@ services:
         limits:
           cpus: '0.5'
           memory: 60M
+
+  prometheus:
+    image: prom/prometheus:v3.5.3
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./services/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:12.4.3
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      # - ./services/grafana/datasources/datasource.yml:/etc/grafana/provisioning/datasources/automatic.yml
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - iot-bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
