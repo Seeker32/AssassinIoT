@@ -11,7 +11,7 @@ logger:
 
 metrics:
   prometheus:
-    use_histogram_timing: false
+    use_histogram_timing: true
   mapping: |
     root = if ![
       "input_latency_ns",
@@ -36,10 +36,37 @@ input:
     keepalive: 60
 
 pipeline:
-  label: "telemetry_processor"
   processors:
-    # 1. 解析 topic 和 JSON 负载，生成属性明细数组。
-    - mapping: |
+    # 1. 提取上下文并标记可预期的非法输入，避免静默丢弃。
+    - label: "extract_input_context"
+      mapping: |
+        meta mqtt_topic = metadata("mqtt_topic").or("")
+        let parts = meta("mqtt_topic").split("/")
+        let dev_id = $parts.1.or("")
+        meta device_identifier = $dev_id
+        meta validation_error = if $dev_id.length() == 0 {
+          "mqtt topic missing device identifier"
+        } else if this.type() != "object" {
+          "payload must be an object"
+        } else {
+          deleted()
+        }
+
+    - label: "drop_invalid_messages"
+      switch:
+        - check: metadata("validation_error") != null
+          processors:
+            - label: "log_invalid_message"
+              log:
+                level: ERROR
+                message: 'Dropping invalid telemetry message: topic=${!metadata("mqtt_topic")} dev_id=${!metadata("device_identifier")} reason=${!metadata("validation_error")}'
+            - label: "delete_invalid_message"
+              mapping: |
+                root = deleted()
+
+    # 2. 解析 topic 和 JSON 负载，生成属性明细数组。
+    - label: "expand_telemetry_properties"
+      mapping: |
         let t = metadata("mqtt_topic").or("//")
         let parts = $t.split("/")
         let dev_id = $parts.1.or("")
@@ -83,35 +110,58 @@ pipeline:
             })
         }
 
-    # 2. 将属性数组拆成消息批次，每个属性一条消息。
-    - unarchive:
+    - label: "handle_processing_errors"
+      catch:
+        - label: "log_processing_error"
+          log:
+            level: ERROR
+            message: 'Telemetry processing failed: topic=${!metadata("mqtt_topic")} dev_id=${!metadata("device_identifier")} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
+        - label: "delete_processing_error_message"
+          mapping: |
+            root = deleted()
+
+    # 3. 将属性数组拆成消息批次，每个属性一条消息。
+    - label: "split_telemetry_batch"
+      unarchive:
         format: json_array
+
+    - label: "handle_batch_expansion_errors"
+      catch:
+        - label: "log_batch_expansion_error"
+          log:
+            level: ERROR
+            message: 'Telemetry batch expansion failed: topic=${!metadata("mqtt_topic")} dev_id=${!metadata("device_identifier")} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
+        - label: "delete_batch_expansion_error_message"
+          mapping: |
+            root = deleted()
 
 output:
   label: "telemetry_output"
-  sql_insert:
-    driver: postgres
-    dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
-    table: device_telemetry
-    columns:
-      - time
-      - device_identifier
-      - property_name
-      - value_type
-      - value_number
-      - value_string
-      - value_bool
-      - value_json
-      - received_at
-    args_mapping: |
-      root = [
-        this.time,
-        this.device_identifier,
-        this.property_name,
-        this.value_type,
-        this.value_number,
-        this.value_string,
-        this.value_bool,
-        this.value_json,
-        this.received_at
-      ]
+  fallback:
+    - sql_insert:
+        driver: postgres
+        dsn: "${POSTGRES_DSN:postgres://postgres:password@database:5432/postgres?sslmode=disable}"
+        table: device_telemetry
+        columns:
+          - time
+          - device_identifier
+          - property_name
+          - value_type
+          - value_number
+          - value_string
+          - value_bool
+          - value_json
+          - received_at
+        args_mapping: |
+          root = [
+            this.time,
+            this.device_identifier,
+            this.property_name,
+            this.value_type,
+            this.value_number,
+            this.value_string,
+            this.value_bool,
+            this.value_json,
+            this.received_at
+          ]
+    - reject: 'Telemetry write failed: dev_id=${!this.device_identifier} property=${!this.property_name} time=${!this.time} error=${!error()} source_label=${!error_source_label()} source_type=${!error_source_type()} source_path=${!error_source_path()}'
