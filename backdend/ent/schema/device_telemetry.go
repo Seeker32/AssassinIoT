@@ -30,8 +30,11 @@ func (DeviceTelemetry) Fields() []ent.Field {
 		field.String("device_identifier"),
 		field.String("property_name"),
 		field.Enum("value_type").
-			Values("number", "string", "bool", "json", "null"),
-		field.Float("value_number").
+			Values("int", "float", "string", "bool", "json", "null"),
+		field.Int32("value_int").
+			Optional().
+			Nillable(),
+		field.Float("value_float").
 			Optional().
 			Nillable(),
 		field.String("value_string").
