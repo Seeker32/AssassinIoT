@@ -12,3 +12,4 @@ db:
 server:
   log_level: info                # Log level (debug | info | warn | error)
   log_type: text                 # Log output format (text | json)
+  addr: ":8080"                  # HTTP listen address

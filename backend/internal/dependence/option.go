@@ -3,6 +3,7 @@ package dependence
 import (
 	"log/slog"
 
+	"github.com/Seeker32/AssassinIoT/backend/ent"
 	"github.com/Seeker32/AssassinIoT/backend/internal/conf"
 )
 
@@ -31,5 +32,11 @@ func WithConfigProvider(c conf.ConfigProvider) Option {
 func WithLogger(logger *slog.Logger) Option {
 	return optionFunc(func(d *dependence) {
 		d.logger = logger
+	})
+}
+
+func WithDBClient(client *ent.Client) Option {
+	return optionFunc(func(d *dependence) {
+		d.dbClient = client
 	})
 }
