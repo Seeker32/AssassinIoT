@@ -1,0 +1,14 @@
+# Database configuration
+db:
+  host: <db-host>                # Database server hostname
+  port: 5432                     # Database server port
+  database: <db-name>            # Database name
+  database_url: <connection-url>  # Full connection string (takes precedence if non-empty)
+  username: <db-user>            # Database user
+  password: <db-password>        # Database password
+  ssl_mode: disable              # PostgreSQL SSL mode (disable | require | verify-ca | verify-full)
+
+# Server configuration
+server:
+  log_level: info                # Log level (debug | info | warn | error)
+  log_type: text                 # Log output format (text | json)
