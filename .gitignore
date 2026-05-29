@@ -3,6 +3,8 @@
 .venv
 
 .env
+*.yaml
+*.yml
 
 services/emqx/data
 services/emqx/log
