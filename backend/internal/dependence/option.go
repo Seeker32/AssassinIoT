@@ -1,0 +1,35 @@
+package dependence
+
+import (
+	"log/slog"
+
+	"github.com/Seeker32/AssassinIoT/internal/conf"
+)
+
+type Option interface {
+	apply(*dependence)
+}
+
+type optionFunc func(*dependence)
+
+func (f optionFunc) apply(d *dependence) {
+	f(d)
+}
+
+func WithConfigPath(path string) Option {
+	return optionFunc(func(d *dependence) {
+		d.configPath = path
+	})
+}
+
+func WithConfigProvider(c conf.ConfigProvider) Option {
+	return optionFunc(func(d *dependence) {
+		d.configProvider = c
+	})
+}
+
+func WithLogger(logger *slog.Logger) Option {
+	return optionFunc(func(d *dependence) {
+		d.logger = logger
+	})
+}
