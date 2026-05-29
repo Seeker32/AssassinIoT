@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/Seeker32/AssassinIoT/ent"
+	"github.com/Seeker32/AssassinIoT/backend/ent"
 	// required by schema hooks.
-	_ "github.com/Seeker32/AssassinIoT/ent/runtime"
+	_ "github.com/Seeker32/AssassinIoT/backend/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/Seeker32/AssassinIoT/ent/migrate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/migrate"
 )
 
 type (

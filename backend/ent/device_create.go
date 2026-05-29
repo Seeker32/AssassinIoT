@@ -10,9 +10,9 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Seeker32/AssassinIoT/ent/device"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/device"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // DeviceCreate is the builder for creating a Device entity.

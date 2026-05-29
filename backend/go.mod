@@ -1,4 +1,4 @@
-module github.com/Seeker32/AssassinIoT
+module github.com/Seeker32/AssassinIoT/backend
 
 go 1.26.0
 

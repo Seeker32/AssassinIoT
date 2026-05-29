@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Seeker32/AssassinIoT/ent/modelcategory"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
 )
 
 // ModelCategory is the model entity for the ModelCategory schema.

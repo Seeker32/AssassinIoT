@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
 )
 
 // Tenant is the model entity for the Tenant schema.

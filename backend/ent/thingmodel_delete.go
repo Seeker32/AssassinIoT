@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Seeker32/AssassinIoT/ent/predicate"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // ThingModelDelete is the builder for deleting a ThingModel entity.

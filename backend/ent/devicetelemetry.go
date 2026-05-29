@@ -10,7 +10,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Seeker32/AssassinIoT/ent/devicetelemetry"
+	"github.com/Seeker32/AssassinIoT/backend/ent/devicetelemetry"
 )
 
 // DeviceTelemetry is the model entity for the DeviceTelemetry schema.

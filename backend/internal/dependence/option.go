@@ -3,7 +3,7 @@ package dependence
 import (
 	"log/slog"
 
-	"github.com/Seeker32/AssassinIoT/internal/conf"
+	"github.com/Seeker32/AssassinIoT/backend/internal/conf"
 )
 
 type Option interface {

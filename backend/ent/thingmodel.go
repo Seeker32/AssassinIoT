@@ -10,9 +10,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Seeker32/AssassinIoT/ent/modelcategory"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // ThingModel is the model entity for the ThingModel schema.

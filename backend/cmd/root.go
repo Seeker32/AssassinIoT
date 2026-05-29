@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	databaseURL string
-	migrateDir  string
-	cfgFile     string
-	env         string
+	databaseURL       string
+	migrateDir        string
+	migrateConfigFile string
+	env               string
 )
 
 var rootCmd = &cobra.Command{
@@ -28,14 +28,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&databaseURL, "url", "u", "",
-		"Database connection URL (overrides atlas.hcl environment)")
-	rootCmd.PersistentFlags().StringVar(&migrateDir, "dir", "ent/migrate/migrations",
-		"Migration directory path")
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "ent/migrate/atlas.hcl",
-		"Atlas HCL config file path")
-	rootCmd.PersistentFlags().StringVar(&env, "env", "local",
-		"Atlas environment name from HCL config")
 }
 
 func newAtlasClient() (*atlasexec.Client, error) {

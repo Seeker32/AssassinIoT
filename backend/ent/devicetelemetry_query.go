@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/Seeker32/AssassinIoT/ent/devicetelemetry"
-	"github.com/Seeker32/AssassinIoT/ent/predicate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/devicetelemetry"
+	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
 )
 
 // DeviceTelemetryQuery is the builder for querying DeviceTelemetry entities.

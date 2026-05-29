@@ -12,11 +12,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Seeker32/AssassinIoT/ent/device"
-	"github.com/Seeker32/AssassinIoT/ent/modelcategory"
-	"github.com/Seeker32/AssassinIoT/ent/predicate"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/device"
+	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // ThingModelQuery is the builder for querying ThingModel entities.

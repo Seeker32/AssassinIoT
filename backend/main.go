@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Seeker32/AssassinIoT/cmd"
+import "github.com/Seeker32/AssassinIoT/backend/cmd"
 
 func main() {
 	cmd.Execute()

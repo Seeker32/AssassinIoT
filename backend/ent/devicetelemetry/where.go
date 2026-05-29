@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/Seeker32/AssassinIoT/ent/predicate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
 )
 
 // Time applies equality check predicate on the "time" field. It's identical to TimeEQ.

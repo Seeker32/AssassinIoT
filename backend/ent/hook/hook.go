@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Seeker32/AssassinIoT/ent"
+	"github.com/Seeker32/AssassinIoT/backend/ent"
 )
 
 // The DeviceFunc type is an adapter to allow the use of ordinary

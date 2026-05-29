@@ -9,16 +9,16 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/Seeker32/AssassinIoT/ent/migrate"
+	"github.com/Seeker32/AssassinIoT/backend/ent/migrate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/Seeker32/AssassinIoT/ent/device"
-	"github.com/Seeker32/AssassinIoT/ent/modelcategory"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/device"
+	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // Client is the client that holds all ent builders.

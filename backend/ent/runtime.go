@@ -5,12 +5,12 @@ package ent
 import (
 	"time"
 
-	"github.com/Seeker32/AssassinIoT/ent/device"
-	"github.com/Seeker32/AssassinIoT/ent/devicetelemetry"
-	"github.com/Seeker32/AssassinIoT/ent/modelcategory"
-	"github.com/Seeker32/AssassinIoT/ent/schema"
-	"github.com/Seeker32/AssassinIoT/ent/tenant"
-	"github.com/Seeker32/AssassinIoT/ent/thingmodel"
+	"github.com/Seeker32/AssassinIoT/backend/ent/device"
+	"github.com/Seeker32/AssassinIoT/backend/ent/devicetelemetry"
+	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/schema"
+	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
+	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
 
 // The init function reads all schema descriptors with runtime code
