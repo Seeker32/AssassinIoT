@@ -21,6 +21,7 @@ type Dep interface {
 	ConfigProvider() conf.ConfigProvider
 	DBClient() *ent.Client
 	Logger() *slog.Logger
+	Close() error
 }
 
 type dependence struct {
@@ -90,6 +91,20 @@ func (d *dependence) DBClient() *ent.Client {
 	d.dbClient = client
 
 	return d.dbClient
+}
+
+func (d *dependence) Close() error {
+	if d.dbClient == nil {
+		return nil
+	}
+
+	if err := d.dbClient.Close(); err != nil {
+		return err
+	}
+
+	d.dbClient = nil
+
+	return nil
 }
 
 func resolveDatabaseConnection(cfg conf.DBConfig) (string, string, error) {
