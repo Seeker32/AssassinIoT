@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Seeker32/AssassinIoT/backend/internal/dependence"
 )
 
@@ -32,9 +34,13 @@ func NewServer(dep dependence.Dep) *server {
 
 func (s *server) Start() error {
 	addr := s.resolveAddr()
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+
 	httpServer := &http.Server{
 		Addr:    addr,
-		Handler: http.NewServeMux(),
+		Handler: r,
 	}
 
 	errCh := make(chan error, 1)
