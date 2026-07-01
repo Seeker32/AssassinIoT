@@ -13,3 +13,7 @@ services/emqx/log
 services/rabbitmq/data
 
 .wiki/
+
+# frontend
+node_modules/
+dist/
