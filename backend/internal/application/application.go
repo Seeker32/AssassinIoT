@@ -1,3 +1,4 @@
+// 应用入口
 package application
 
 import (
@@ -37,7 +38,8 @@ func NewServer(dep dependence.Dep) *server {
 
 func (s *server) Start() error {
 	addr := s.resolveAddr()
-
+	mode := s.dep.ConfigProvider().ServerConfig().Mode
+	gin.SetMode(mode)
 	r := gin.New()
 	r.Use(gin.Recovery())
 

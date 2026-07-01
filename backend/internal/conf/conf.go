@@ -1,3 +1,4 @@
+// 配置管理模块
 package conf
 
 import (

@@ -11,3 +11,5 @@ docs/
 services/emqx/data
 services/emqx/log
 services/rabbitmq/data
+
+.wiki/

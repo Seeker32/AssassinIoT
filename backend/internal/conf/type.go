@@ -19,4 +19,5 @@ type ServerConfig struct {
 	LogLevel string `yaml:"log_level"`
 	LogType  string `yaml:"log_type"`
 	Addr     string `yaml:"addr"`
+	Mode     string `yaml:"mode"`
 }
