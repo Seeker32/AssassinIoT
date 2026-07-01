@@ -17,9 +17,9 @@ func init() {
 	rootCmd.AddCommand(migrateCmd)
 	migrateCmd.PersistentFlags().StringVarP(&databaseURL, "url", "u", "",
 		"Database connection URL (overrides atlas.hcl environment)")
-	migrateCmd.PersistentFlags().StringVar(&migrateDir, "dir", "ent/migrate/migrations",
+	migrateCmd.PersistentFlags().StringVar(&migrateDir, "dir", "./ent/migrate/migrations",
 		"Migration directory path")
-	migrateCmd.PersistentFlags().StringVar(&migrateConfigFile, "config", "ent/migrate/atlas.hcl",
+	migrateCmd.PersistentFlags().StringVar(&migrateConfigFile, "config", "./ent/migrate/atlas.hcl",
 		"Atlas HCL config file path")
 	migrateCmd.PersistentFlags().StringVar(&env, "env", "local",
 		"Atlas environment name from HCL config")

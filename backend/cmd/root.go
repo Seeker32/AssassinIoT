@@ -31,7 +31,7 @@ func init() {
 }
 
 func newAtlasClient() (*atlasexec.Client, error) {
-	return atlasexec.NewClient(".", "atlas")
+	return atlasexec.NewClient("./ent/migrate", "atlas")
 }
 
 func absMigrateDir() (string, error) {
