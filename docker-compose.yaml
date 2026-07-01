@@ -1,3 +1,9 @@
+x-logging: &logging-default
+  driver: "json-file"
+  options:
+    max-size: "30m"
+    max-file: "3"
+
 volumes:
   pgdata:
   prometheus-data:
@@ -21,11 +27,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -50,11 +52,7 @@ services:
       - ./services/emqx/data:/opt/emqx/data
       - ./services/emqx/log:/opt/emqx/log
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -77,11 +75,7 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq
       - ./services/rabbitmq/log:/var/log/rabbitmq
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -106,11 +100,7 @@ services:
     depends_on:
       - emqx
       - rabbitmq
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -135,11 +125,7 @@ services:
     depends_on:
       - database
       - rabbitmq
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -161,11 +147,7 @@ services:
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=15d
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
@@ -186,11 +168,7 @@ services:
       # - ./services/grafana/datasources/datasource.yml:/etc/grafana/provisioning/datasources/automatic.yml
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-default
     networks:
       - iot-bridge
     deploy:
