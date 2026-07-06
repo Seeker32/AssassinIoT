@@ -1,18 +1,18 @@
 .vscode
+.idea
 .superpowers
 .venv
-
+.wiki/
 .env
 *.yaml
 *.yml
 
 docs/
 
+# services
 services/emqx/data
 services/emqx/log
 services/rabbitmq/data
-
-.wiki/
 
 # frontend
 node_modules/
