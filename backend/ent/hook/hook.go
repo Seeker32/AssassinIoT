@@ -9,6 +9,18 @@ import (
 	"github.com/Seeker32/AssassinIoT/backend/ent"
 )
 
+// The AccountFunc type is an adapter to allow the use of ordinary
+// function as Account mutator.
+type AccountFunc func(context.Context, *ent.AccountMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountMutation", m)
+}
+
 // The DeviceFunc type is an adapter to allow the use of ordinary
 // function as Device mutator.
 type DeviceFunc func(context.Context, *ent.DeviceMutation) (ent.Value, error)
@@ -31,6 +43,18 @@ func (f ModelCategoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ModelCategoryMutation", m)
+}
+
+// The MqttUserFunc type is an adapter to allow the use of ordinary
+// function as MqttUser mutator.
+type MqttUserFunc func(context.Context, *ent.MqttUserMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MqttUserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MqttUserMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MqttUserMutation", m)
 }
 
 // The TenantFunc type is an adapter to allow the use of ordinary

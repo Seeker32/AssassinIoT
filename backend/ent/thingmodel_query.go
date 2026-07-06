@@ -371,12 +371,12 @@ func (_q *ThingModelQuery) WithDevices(opts ...func(*DeviceQuery)) *ThingModelQu
 // Example:
 //
 //	var v []struct {
-//		ModelKey string `json:"model_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ThingModel.Query().
-//		GroupBy(thingmodel.FieldModelKey).
+//		GroupBy(thingmodel.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ThingModelQuery) GroupBy(field string, fields ...string) *ThingModelGroupBy {
@@ -394,11 +394,11 @@ func (_q *ThingModelQuery) GroupBy(field string, fields ...string) *ThingModelGr
 // Example:
 //
 //	var v []struct {
-//		ModelKey string `json:"model_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.ThingModel.Query().
-//		Select(thingmodel.FieldModelKey).
+//		Select(thingmodel.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *ThingModelQuery) Select(fields ...string) *ThingModelSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

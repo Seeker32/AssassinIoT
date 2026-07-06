@@ -8,30 +8,30 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Seeker32/AssassinIoT/backend/ent/device"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
 )
 
-// DeviceDelete is the builder for deleting a Device entity.
-type DeviceDelete struct {
+// AccountDelete is the builder for deleting a Account entity.
+type AccountDelete struct {
 	config
 	hooks    []Hook
-	mutation *DeviceMutation
+	mutation *AccountMutation
 }
 
-// Where appends a list predicates to the DeviceDelete builder.
-func (_d *DeviceDelete) Where(ps ...predicate.Device) *DeviceDelete {
+// Where appends a list predicates to the AccountDelete builder.
+func (_d *AccountDelete) Where(ps ...predicate.Account) *AccountDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *DeviceDelete) Exec(ctx context.Context) (int, error) {
+func (_d *AccountDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *DeviceDelete) ExecX(ctx context.Context) int {
+func (_d *AccountDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *DeviceDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *DeviceDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+func (_d *AccountDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(account.Table, sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *DeviceDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// DeviceDeleteOne is the builder for deleting a single Device entity.
-type DeviceDeleteOne struct {
-	_d *DeviceDelete
+// AccountDeleteOne is the builder for deleting a single Account entity.
+type AccountDeleteOne struct {
+	_d *AccountDelete
 }
 
-// Where appends a list predicates to the DeviceDelete builder.
-func (_d *DeviceDeleteOne) Where(ps ...predicate.Device) *DeviceDeleteOne {
+// Where appends a list predicates to the AccountDelete builder.
+func (_d *AccountDeleteOne) Where(ps ...predicate.Account) *AccountDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *DeviceDeleteOne) Exec(ctx context.Context) error {
+func (_d *AccountDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{device.Label}
+		return &NotFoundError{account.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *DeviceDeleteOne) ExecX(ctx context.Context) {
+func (_d *AccountDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

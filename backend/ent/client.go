@@ -15,8 +15,10 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/mqttuser"
 	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
 	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
@@ -26,12 +28,16 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Account is the client for interacting with the Account builders.
+	Account *AccountClient
 	// Device is the client for interacting with the Device builders.
 	Device *DeviceClient
 	// DeviceTelemetry is the client for interacting with the DeviceTelemetry builders.
 	DeviceTelemetry *DeviceTelemetryClient
 	// ModelCategory is the client for interacting with the ModelCategory builders.
 	ModelCategory *ModelCategoryClient
+	// MqttUser is the client for interacting with the MqttUser builders.
+	MqttUser *MqttUserClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
 	// ThingModel is the client for interacting with the ThingModel builders.
@@ -47,9 +53,11 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Account = NewAccountClient(c.config)
 	c.Device = NewDeviceClient(c.config)
 	c.DeviceTelemetry = NewDeviceTelemetryClient(c.config)
 	c.ModelCategory = NewModelCategoryClient(c.config)
+	c.MqttUser = NewMqttUserClient(c.config)
 	c.Tenant = NewTenantClient(c.config)
 	c.ThingModel = NewThingModelClient(c.config)
 }
@@ -144,9 +152,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		Account:         NewAccountClient(cfg),
 		Device:          NewDeviceClient(cfg),
 		DeviceTelemetry: NewDeviceTelemetryClient(cfg),
 		ModelCategory:   NewModelCategoryClient(cfg),
+		MqttUser:        NewMqttUserClient(cfg),
 		Tenant:          NewTenantClient(cfg),
 		ThingModel:      NewThingModelClient(cfg),
 	}, nil
@@ -168,9 +178,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		Account:         NewAccountClient(cfg),
 		Device:          NewDeviceClient(cfg),
 		DeviceTelemetry: NewDeviceTelemetryClient(cfg),
 		ModelCategory:   NewModelCategoryClient(cfg),
+		MqttUser:        NewMqttUserClient(cfg),
 		Tenant:          NewTenantClient(cfg),
 		ThingModel:      NewThingModelClient(cfg),
 	}, nil
@@ -179,7 +191,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Device.
+//		Account.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -201,35 +213,190 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Device.Use(hooks...)
-	c.ModelCategory.Use(hooks...)
-	c.Tenant.Use(hooks...)
-	c.ThingModel.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Account, c.Device, c.ModelCategory, c.MqttUser, c.Tenant, c.ThingModel,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Device.Intercept(interceptors...)
-	c.DeviceTelemetry.Intercept(interceptors...)
-	c.ModelCategory.Intercept(interceptors...)
-	c.Tenant.Intercept(interceptors...)
-	c.ThingModel.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Account, c.Device, c.DeviceTelemetry, c.ModelCategory, c.MqttUser, c.Tenant,
+		c.ThingModel,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AccountMutation:
+		return c.Account.mutate(ctx, m)
 	case *DeviceMutation:
 		return c.Device.mutate(ctx, m)
 	case *ModelCategoryMutation:
 		return c.ModelCategory.mutate(ctx, m)
+	case *MqttUserMutation:
+		return c.MqttUser.mutate(ctx, m)
 	case *TenantMutation:
 		return c.Tenant.mutate(ctx, m)
 	case *ThingModelMutation:
 		return c.ThingModel.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AccountClient is a client for the Account schema.
+type AccountClient struct {
+	config
+}
+
+// NewAccountClient returns a client for the Account from the given config.
+func NewAccountClient(c config) *AccountClient {
+	return &AccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `account.Hooks(f(g(h())))`.
+func (c *AccountClient) Use(hooks ...Hook) {
+	c.hooks.Account = append(c.hooks.Account, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `account.Intercept(f(g(h())))`.
+func (c *AccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Account = append(c.inters.Account, interceptors...)
+}
+
+// Create returns a builder for creating a Account entity.
+func (c *AccountClient) Create() *AccountCreate {
+	mutation := newAccountMutation(c.config, OpCreate)
+	return &AccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Account entities.
+func (c *AccountClient) CreateBulk(builders ...*AccountCreate) *AccountCreateBulk {
+	return &AccountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountClient) MapCreateBulk(slice any, setFunc func(*AccountCreate, int)) *AccountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountCreateBulk{err: fmt.Errorf("calling to AccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Account.
+func (c *AccountClient) Update() *AccountUpdate {
+	mutation := newAccountMutation(c.config, OpUpdate)
+	return &AccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountClient) UpdateOne(_m *Account) *AccountUpdateOne {
+	mutation := newAccountMutation(c.config, OpUpdateOne, withAccount(_m))
+	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountClient) UpdateOneID(id int) *AccountUpdateOne {
+	mutation := newAccountMutation(c.config, OpUpdateOne, withAccountID(id))
+	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Account.
+func (c *AccountClient) Delete() *AccountDelete {
+	mutation := newAccountMutation(c.config, OpDelete)
+	return &AccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountClient) DeleteOne(_m *Account) *AccountDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountClient) DeleteOneID(id int) *AccountDeleteOne {
+	builder := c.Delete().Where(account.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountDeleteOne{builder}
+}
+
+// Query returns a query builder for Account.
+func (c *AccountClient) Query() *AccountQuery {
+	return &AccountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Account entity by its id.
+func (c *AccountClient) Get(ctx context.Context, id int) (*Account, error) {
+	return c.Query().Where(account.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountClient) GetX(ctx context.Context, id int) *Account {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTenant queries the tenant edge of a Account.
+func (c *AccountClient) QueryTenant(_m *Account) *TenantQuery {
+	query := (&TenantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, id),
+			sqlgraph.To(tenant.Table, tenant.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, account.TenantTable, account.TenantPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AccountClient) Hooks() []Hook {
+	return c.hooks.Account
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountClient) Interceptors() []Interceptor {
+	return c.inters.Account
+}
+
+func (c *AccountClient) mutate(ctx context.Context, m *AccountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Account mutation op: %q", m.Op())
 	}
 }
 
@@ -294,7 +461,7 @@ func (c *DeviceClient) UpdateOne(_m *Device) *DeviceUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *DeviceClient) UpdateOneID(id string) *DeviceUpdateOne {
+func (c *DeviceClient) UpdateOneID(id int) *DeviceUpdateOne {
 	mutation := newDeviceMutation(c.config, OpUpdateOne, withDeviceID(id))
 	return &DeviceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -311,7 +478,7 @@ func (c *DeviceClient) DeleteOne(_m *Device) *DeviceDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *DeviceClient) DeleteOneID(id string) *DeviceDeleteOne {
+func (c *DeviceClient) DeleteOneID(id int) *DeviceDeleteOne {
 	builder := c.Delete().Where(device.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -328,12 +495,12 @@ func (c *DeviceClient) Query() *DeviceQuery {
 }
 
 // Get returns a Device entity by its id.
-func (c *DeviceClient) Get(ctx context.Context, id string) (*Device, error) {
+func (c *DeviceClient) Get(ctx context.Context, id int) (*Device, error) {
 	return c.Query().Where(device.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *DeviceClient) GetX(ctx context.Context, id string) *Device {
+func (c *DeviceClient) GetX(ctx context.Context, id int) *Device {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -593,6 +760,139 @@ func (c *ModelCategoryClient) mutate(ctx context.Context, m *ModelCategoryMutati
 	}
 }
 
+// MqttUserClient is a client for the MqttUser schema.
+type MqttUserClient struct {
+	config
+}
+
+// NewMqttUserClient returns a client for the MqttUser from the given config.
+func NewMqttUserClient(c config) *MqttUserClient {
+	return &MqttUserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `mqttuser.Hooks(f(g(h())))`.
+func (c *MqttUserClient) Use(hooks ...Hook) {
+	c.hooks.MqttUser = append(c.hooks.MqttUser, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `mqttuser.Intercept(f(g(h())))`.
+func (c *MqttUserClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MqttUser = append(c.inters.MqttUser, interceptors...)
+}
+
+// Create returns a builder for creating a MqttUser entity.
+func (c *MqttUserClient) Create() *MqttUserCreate {
+	mutation := newMqttUserMutation(c.config, OpCreate)
+	return &MqttUserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MqttUser entities.
+func (c *MqttUserClient) CreateBulk(builders ...*MqttUserCreate) *MqttUserCreateBulk {
+	return &MqttUserCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MqttUserClient) MapCreateBulk(slice any, setFunc func(*MqttUserCreate, int)) *MqttUserCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MqttUserCreateBulk{err: fmt.Errorf("calling to MqttUserClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MqttUserCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MqttUserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MqttUser.
+func (c *MqttUserClient) Update() *MqttUserUpdate {
+	mutation := newMqttUserMutation(c.config, OpUpdate)
+	return &MqttUserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MqttUserClient) UpdateOne(_m *MqttUser) *MqttUserUpdateOne {
+	mutation := newMqttUserMutation(c.config, OpUpdateOne, withMqttUser(_m))
+	return &MqttUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MqttUserClient) UpdateOneID(id int) *MqttUserUpdateOne {
+	mutation := newMqttUserMutation(c.config, OpUpdateOne, withMqttUserID(id))
+	return &MqttUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MqttUser.
+func (c *MqttUserClient) Delete() *MqttUserDelete {
+	mutation := newMqttUserMutation(c.config, OpDelete)
+	return &MqttUserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MqttUserClient) DeleteOne(_m *MqttUser) *MqttUserDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MqttUserClient) DeleteOneID(id int) *MqttUserDeleteOne {
+	builder := c.Delete().Where(mqttuser.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MqttUserDeleteOne{builder}
+}
+
+// Query returns a query builder for MqttUser.
+func (c *MqttUserClient) Query() *MqttUserQuery {
+	return &MqttUserQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMqttUser},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MqttUser entity by its id.
+func (c *MqttUserClient) Get(ctx context.Context, id int) (*MqttUser, error) {
+	return c.Query().Where(mqttuser.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MqttUserClient) GetX(ctx context.Context, id int) *MqttUser {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MqttUserClient) Hooks() []Hook {
+	return c.hooks.MqttUser
+}
+
+// Interceptors returns the client interceptors.
+func (c *MqttUserClient) Interceptors() []Interceptor {
+	return c.inters.MqttUser
+}
+
+func (c *MqttUserClient) mutate(ctx context.Context, m *MqttUserMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MqttUserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MqttUserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MqttUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MqttUserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MqttUser mutation op: %q", m.Op())
+	}
+}
+
 // TenantClient is a client for the Tenant schema.
 type TenantClient struct {
 	config
@@ -699,6 +999,22 @@ func (c *TenantClient) GetX(ctx context.Context, id int) *Tenant {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryAccounts queries the accounts edge of a Tenant.
+func (c *TenantClient) QueryAccounts(_m *Tenant) *AccountQuery {
+	query := (&AccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenant.Table, tenant.FieldID, id),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, tenant.AccountsTable, tenant.AccountsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // QueryModelCategories queries the model_categories edge of a Tenant.
@@ -958,9 +1274,10 @@ func (c *ThingModelClient) mutate(ctx context.Context, m *ThingModelMutation) (V
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Device, ModelCategory, Tenant, ThingModel []ent.Hook
+		Account, Device, ModelCategory, MqttUser, Tenant, ThingModel []ent.Hook
 	}
 	inters struct {
-		Device, DeviceTelemetry, ModelCategory, Tenant, ThingModel []ent.Interceptor
+		Account, Device, DeviceTelemetry, ModelCategory, MqttUser, Tenant,
+		ThingModel []ent.Interceptor
 	}
 )

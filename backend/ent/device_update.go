@@ -30,6 +30,26 @@ func (_u *DeviceUpdate) Where(ps ...predicate.Device) *DeviceUpdate {
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *DeviceUpdate) SetDeletedAt(v time.Time) *DeviceUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *DeviceUpdate) SetNillableDeletedAt(v *time.Time) *DeviceUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *DeviceUpdate) ClearDeletedAt() *DeviceUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetTenantKey sets the "tenant_key" field.
 func (_u *DeviceUpdate) SetTenantKey(v string) *DeviceUpdate {
 	_u.mutation.SetTenantKey(v)
@@ -302,13 +322,19 @@ func (_u *DeviceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(device.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(device.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(device.FieldTenantKey, field.TypeString, value)
@@ -422,6 +448,26 @@ type DeviceUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *DeviceMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *DeviceUpdateOne) SetDeletedAt(v time.Time) *DeviceUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *DeviceUpdateOne) SetNillableDeletedAt(v *time.Time) *DeviceUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *DeviceUpdateOne) ClearDeletedAt() *DeviceUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetTenantKey sets the "tenant_key" field.
@@ -709,7 +755,7 @@ func (_u *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err erro
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Device.id" for update`)}
@@ -733,6 +779,12 @@ func (_u *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err erro
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(device.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(device.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(device.FieldTenantKey, field.TypeString, value)

@@ -17,6 +17,8 @@ type Tenant struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// 软删除时间，非空表示已删除
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// 租户业务标识，用于 API、MQTT 认证等场景
 	TenantKey string `json:"tenant_key,omitempty"`
 	// 租户名称，用于前端展示
@@ -37,6 +39,8 @@ type Tenant struct {
 
 // TenantEdges holds the relations/edges for other nodes in the graph.
 type TenantEdges struct {
+	// Accounts holds the value of the accounts edge.
+	Accounts []*Account `json:"accounts,omitempty"`
 	// ModelCategories holds the value of the model_categories edge.
 	ModelCategories []*ModelCategory `json:"model_categories,omitempty"`
 	// ThingModels holds the value of the thing_models edge.
@@ -45,13 +49,22 @@ type TenantEdges struct {
 	Devices []*Device `json:"devices,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
+}
+
+// AccountsOrErr returns the Accounts value or an error if the edge
+// was not loaded in eager-loading.
+func (e TenantEdges) AccountsOrErr() ([]*Account, error) {
+	if e.loadedTypes[0] {
+		return e.Accounts, nil
+	}
+	return nil, &NotLoadedError{edge: "accounts"}
 }
 
 // ModelCategoriesOrErr returns the ModelCategories value or an error if the edge
 // was not loaded in eager-loading.
 func (e TenantEdges) ModelCategoriesOrErr() ([]*ModelCategory, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.ModelCategories, nil
 	}
 	return nil, &NotLoadedError{edge: "model_categories"}
@@ -60,7 +73,7 @@ func (e TenantEdges) ModelCategoriesOrErr() ([]*ModelCategory, error) {
 // ThingModelsOrErr returns the ThingModels value or an error if the edge
 // was not loaded in eager-loading.
 func (e TenantEdges) ThingModelsOrErr() ([]*ThingModel, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.ThingModels, nil
 	}
 	return nil, &NotLoadedError{edge: "thing_models"}
@@ -69,7 +82,7 @@ func (e TenantEdges) ThingModelsOrErr() ([]*ThingModel, error) {
 // DevicesOrErr returns the Devices value or an error if the edge
 // was not loaded in eager-loading.
 func (e TenantEdges) DevicesOrErr() ([]*Device, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Devices, nil
 	}
 	return nil, &NotLoadedError{edge: "devices"}
@@ -84,7 +97,7 @@ func (*Tenant) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case tenant.FieldTenantKey, tenant.FieldName, tenant.FieldDescription, tenant.FieldStatus:
 			values[i] = new(sql.NullString)
-		case tenant.FieldCreatedAt, tenant.FieldUpdatedAt:
+		case tenant.FieldDeletedAt, tenant.FieldCreatedAt, tenant.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -107,6 +120,13 @@ func (_m *Tenant) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
+		case tenant.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
+			}
 		case tenant.FieldTenantKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_key", values[i])
@@ -156,6 +176,11 @@ func (_m *Tenant) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryAccounts queries the "accounts" edge of the Tenant entity.
+func (_m *Tenant) QueryAccounts() *AccountQuery {
+	return NewTenantClient(_m.config).QueryAccounts(_m)
+}
+
 // QueryModelCategories queries the "model_categories" edge of the Tenant entity.
 func (_m *Tenant) QueryModelCategories() *ModelCategoryQuery {
 	return NewTenantClient(_m.config).QueryModelCategories(_m)
@@ -194,6 +219,11 @@ func (_m *Tenant) String() string {
 	var builder strings.Builder
 	builder.WriteString("Tenant(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("tenant_key=")
 	builder.WriteString(_m.TenantKey)
 	builder.WriteString(", ")

@@ -22,6 +22,20 @@ type ModelCategoryCreate struct {
 	hooks    []Hook
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *ModelCategoryCreate) SetDeletedAt(v time.Time) *ModelCategoryCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *ModelCategoryCreate) SetNillableDeletedAt(v *time.Time) *ModelCategoryCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetTenantKey sets the "tenant_key" field.
 func (_c *ModelCategoryCreate) SetTenantKey(v string) *ModelCategoryCreate {
 	_c.mutation.SetTenantKey(v)
@@ -297,6 +311,10 @@ func (_c *ModelCategoryCreate) createSpec() (*ModelCategory, *sqlgraph.CreateSpe
 		_node = &ModelCategory{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(modelcategory.Table, sqlgraph.NewFieldSpec(modelcategory.FieldID, field.TypeInt))
 	)
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(modelcategory.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.TenantKey(); ok {
 		_spec.SetField(modelcategory.FieldTenantKey, field.TypeString, value)
 		_node.TenantKey = value

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
 	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
@@ -28,6 +29,26 @@ type TenantUpdate struct {
 // Where appends a list predicates to the TenantUpdate builder.
 func (_u *TenantUpdate) Where(ps ...predicate.Tenant) *TenantUpdate {
 	_u.mutation.Where(ps...)
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *TenantUpdate) SetDeletedAt(v time.Time) *TenantUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *TenantUpdate) SetNillableDeletedAt(v *time.Time) *TenantUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *TenantUpdate) ClearDeletedAt() *TenantUpdate {
+	_u.mutation.ClearDeletedAt()
 	return _u
 }
 
@@ -93,6 +114,21 @@ func (_u *TenantUpdate) SetUpdatedAt(v time.Time) *TenantUpdate {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *TenantUpdate) AddAccountIDs(ids ...int) *TenantUpdate {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *TenantUpdate) AddAccounts(v ...*Account) *TenantUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // AddModelCategoryIDs adds the "model_categories" edge to the ModelCategory entity by IDs.
 func (_u *TenantUpdate) AddModelCategoryIDs(ids ...int) *TenantUpdate {
 	_u.mutation.AddModelCategoryIDs(ids...)
@@ -124,14 +160,14 @@ func (_u *TenantUpdate) AddThingModels(v ...*ThingModel) *TenantUpdate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_u *TenantUpdate) AddDeviceIDs(ids ...string) *TenantUpdate {
+func (_u *TenantUpdate) AddDeviceIDs(ids ...int) *TenantUpdate {
 	_u.mutation.AddDeviceIDs(ids...)
 	return _u
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_u *TenantUpdate) AddDevices(v ...*Device) *TenantUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -141,6 +177,27 @@ func (_u *TenantUpdate) AddDevices(v ...*Device) *TenantUpdate {
 // Mutation returns the TenantMutation object of the builder.
 func (_u *TenantUpdate) Mutation() *TenantMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *TenantUpdate) ClearAccounts() *TenantUpdate {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *TenantUpdate) RemoveAccountIDs(ids ...int) *TenantUpdate {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *TenantUpdate) RemoveAccounts(v ...*Account) *TenantUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // ClearModelCategories clears all "model_categories" edges to the ModelCategory entity.
@@ -192,14 +249,14 @@ func (_u *TenantUpdate) ClearDevices() *TenantUpdate {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (_u *TenantUpdate) RemoveDeviceIDs(ids ...string) *TenantUpdate {
+func (_u *TenantUpdate) RemoveDeviceIDs(ids ...int) *TenantUpdate {
 	_u.mutation.RemoveDeviceIDs(ids...)
 	return _u
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (_u *TenantUpdate) RemoveDevices(v ...*Device) *TenantUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -274,6 +331,12 @@ func (_u *TenantUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(tenant.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(tenant.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(tenant.FieldTenantKey, field.TypeString, value)
 	}
@@ -288,6 +351,51 @@ func (_u *TenantUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tenant.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.ModelCategoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -387,7 +495,7 @@ func (_u *TenantUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -400,7 +508,7 @@ func (_u *TenantUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -416,7 +524,7 @@ func (_u *TenantUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -442,6 +550,26 @@ type TenantUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TenantMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *TenantUpdateOne) SetDeletedAt(v time.Time) *TenantUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *TenantUpdateOne) SetNillableDeletedAt(v *time.Time) *TenantUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *TenantUpdateOne) ClearDeletedAt() *TenantUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetTenantKey sets the "tenant_key" field.
@@ -506,6 +634,21 @@ func (_u *TenantUpdateOne) SetUpdatedAt(v time.Time) *TenantUpdateOne {
 	return _u
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_u *TenantUpdateOne) AddAccountIDs(ids ...int) *TenantUpdateOne {
+	_u.mutation.AddAccountIDs(ids...)
+	return _u
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_u *TenantUpdateOne) AddAccounts(v ...*Account) *TenantUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAccountIDs(ids...)
+}
+
 // AddModelCategoryIDs adds the "model_categories" edge to the ModelCategory entity by IDs.
 func (_u *TenantUpdateOne) AddModelCategoryIDs(ids ...int) *TenantUpdateOne {
 	_u.mutation.AddModelCategoryIDs(ids...)
@@ -537,14 +680,14 @@ func (_u *TenantUpdateOne) AddThingModels(v ...*ThingModel) *TenantUpdateOne {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_u *TenantUpdateOne) AddDeviceIDs(ids ...string) *TenantUpdateOne {
+func (_u *TenantUpdateOne) AddDeviceIDs(ids ...int) *TenantUpdateOne {
 	_u.mutation.AddDeviceIDs(ids...)
 	return _u
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_u *TenantUpdateOne) AddDevices(v ...*Device) *TenantUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -554,6 +697,27 @@ func (_u *TenantUpdateOne) AddDevices(v ...*Device) *TenantUpdateOne {
 // Mutation returns the TenantMutation object of the builder.
 func (_u *TenantUpdateOne) Mutation() *TenantMutation {
 	return _u.mutation
+}
+
+// ClearAccounts clears all "accounts" edges to the Account entity.
+func (_u *TenantUpdateOne) ClearAccounts() *TenantUpdateOne {
+	_u.mutation.ClearAccounts()
+	return _u
+}
+
+// RemoveAccountIDs removes the "accounts" edge to Account entities by IDs.
+func (_u *TenantUpdateOne) RemoveAccountIDs(ids ...int) *TenantUpdateOne {
+	_u.mutation.RemoveAccountIDs(ids...)
+	return _u
+}
+
+// RemoveAccounts removes "accounts" edges to Account entities.
+func (_u *TenantUpdateOne) RemoveAccounts(v ...*Account) *TenantUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAccountIDs(ids...)
 }
 
 // ClearModelCategories clears all "model_categories" edges to the ModelCategory entity.
@@ -605,14 +769,14 @@ func (_u *TenantUpdateOne) ClearDevices() *TenantUpdateOne {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (_u *TenantUpdateOne) RemoveDeviceIDs(ids ...string) *TenantUpdateOne {
+func (_u *TenantUpdateOne) RemoveDeviceIDs(ids ...int) *TenantUpdateOne {
 	_u.mutation.RemoveDeviceIDs(ids...)
 	return _u
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (_u *TenantUpdateOne) RemoveDevices(v ...*Device) *TenantUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -717,6 +881,12 @@ func (_u *TenantUpdateOne) sqlSave(ctx context.Context) (_node *Tenant, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(tenant.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(tenant.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(tenant.FieldTenantKey, field.TypeString, value)
 	}
@@ -731,6 +901,51 @@ func (_u *TenantUpdateOne) sqlSave(ctx context.Context) (_node *Tenant, err erro
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tenant.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !_u.mutation.AccountsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.ModelCategoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -830,7 +1045,7 @@ func (_u *TenantUpdateOne) sqlSave(ctx context.Context) (_node *Tenant, err erro
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -843,7 +1058,7 @@ func (_u *TenantUpdateOne) sqlSave(ctx context.Context) (_node *Tenant, err erro
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -859,7 +1074,7 @@ func (_u *TenantUpdateOne) sqlSave(ctx context.Context) (_node *Tenant, err erro
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

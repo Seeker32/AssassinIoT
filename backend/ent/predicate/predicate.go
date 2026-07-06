@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Account is the predicate function for account builders.
+type Account func(*sql.Selector)
+
 // Device is the predicate function for device builders.
 type Device func(*sql.Selector)
 
@@ -14,6 +17,9 @@ type DeviceTelemetry func(*sql.Selector)
 
 // ModelCategory is the predicate function for modelcategory builders.
 type ModelCategory func(*sql.Selector)
+
+// MqttUser is the predicate function for mqttuser builders.
+type MqttUser func(*sql.Selector)
 
 // Tenant is the predicate function for tenant builders.
 type Tenant func(*sql.Selector)

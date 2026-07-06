@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
 	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
@@ -21,6 +22,20 @@ type TenantCreate struct {
 	config
 	mutation *TenantMutation
 	hooks    []Hook
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *TenantCreate) SetDeletedAt(v time.Time) *TenantCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *TenantCreate) SetNillableDeletedAt(v *time.Time) *TenantCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
 }
 
 // SetTenantKey sets the "tenant_key" field.
@@ -91,6 +106,21 @@ func (_c *TenantCreate) SetNillableUpdatedAt(v *time.Time) *TenantCreate {
 	return _c
 }
 
+// AddAccountIDs adds the "accounts" edge to the Account entity by IDs.
+func (_c *TenantCreate) AddAccountIDs(ids ...int) *TenantCreate {
+	_c.mutation.AddAccountIDs(ids...)
+	return _c
+}
+
+// AddAccounts adds the "accounts" edges to the Account entity.
+func (_c *TenantCreate) AddAccounts(v ...*Account) *TenantCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAccountIDs(ids...)
+}
+
 // AddModelCategoryIDs adds the "model_categories" edge to the ModelCategory entity by IDs.
 func (_c *TenantCreate) AddModelCategoryIDs(ids ...int) *TenantCreate {
 	_c.mutation.AddModelCategoryIDs(ids...)
@@ -122,14 +152,14 @@ func (_c *TenantCreate) AddThingModels(v ...*ThingModel) *TenantCreate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_c *TenantCreate) AddDeviceIDs(ids ...string) *TenantCreate {
+func (_c *TenantCreate) AddDeviceIDs(ids ...int) *TenantCreate {
 	_c.mutation.AddDeviceIDs(ids...)
 	return _c
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_c *TenantCreate) AddDevices(v ...*Device) *TenantCreate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -250,6 +280,10 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 		_node = &Tenant{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(tenant.Table, sqlgraph.NewFieldSpec(tenant.FieldID, field.TypeInt))
 	)
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(tenant.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.TenantKey(); ok {
 		_spec.SetField(tenant.FieldTenantKey, field.TypeString, value)
 		_node.TenantKey = value
@@ -273,6 +307,22 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(tenant.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   tenant.AccountsTable,
+			Columns: tenant.AccountsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.ModelCategoriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -314,7 +364,7 @@ func (_c *TenantCreate) createSpec() (*Tenant, *sqlgraph.CreateSpec) {
 			Columns: []string{tenant.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

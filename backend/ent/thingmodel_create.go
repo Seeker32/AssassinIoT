@@ -23,6 +23,20 @@ type ThingModelCreate struct {
 	hooks    []Hook
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *ThingModelCreate) SetDeletedAt(v time.Time) *ThingModelCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *ThingModelCreate) SetNillableDeletedAt(v *time.Time) *ThingModelCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetModelKey sets the "model_key" field.
 func (_c *ThingModelCreate) SetModelKey(v string) *ThingModelCreate {
 	_c.mutation.SetModelKey(v)
@@ -158,14 +172,14 @@ func (_c *ThingModelCreate) SetModelCategory(v *ModelCategory) *ThingModelCreate
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_c *ThingModelCreate) AddDeviceIDs(ids ...string) *ThingModelCreate {
+func (_c *ThingModelCreate) AddDeviceIDs(ids ...int) *ThingModelCreate {
 	_c.mutation.AddDeviceIDs(ids...)
 	return _c
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_c *ThingModelCreate) AddDevices(v ...*Device) *ThingModelCreate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -347,6 +361,10 @@ func (_c *ThingModelCreate) createSpec() (*ThingModel, *sqlgraph.CreateSpec) {
 		_node = &ThingModel{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(thingmodel.Table, sqlgraph.NewFieldSpec(thingmodel.FieldID, field.TypeInt))
 	)
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(thingmodel.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
 	if value, ok := _c.mutation.ModelKey(); ok {
 		_spec.SetField(thingmodel.FieldModelKey, field.TypeString, value)
 		_node.ModelKey = value
@@ -437,7 +455,7 @@ func (_c *ThingModelCreate) createSpec() (*ThingModel, *sqlgraph.CreateSpec) {
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

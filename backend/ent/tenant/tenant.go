@@ -15,6 +15,8 @@ const (
 	Label = "tenant"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldTenantKey holds the string denoting the tenant_key field in the database.
 	FieldTenantKey = "tenant_key"
 	// FieldName holds the string denoting the name field in the database.
@@ -27,16 +29,21 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
+	EdgeAccounts = "accounts"
 	// EdgeModelCategories holds the string denoting the model_categories edge name in mutations.
 	EdgeModelCategories = "model_categories"
 	// EdgeThingModels holds the string denoting the thing_models edge name in mutations.
 	EdgeThingModels = "thing_models"
 	// EdgeDevices holds the string denoting the devices edge name in mutations.
 	EdgeDevices = "devices"
-	// DeviceFieldID holds the string denoting the ID field of the Device.
-	DeviceFieldID = "dev_id"
 	// Table holds the table name of the tenant in the database.
 	Table = "tenants"
+	// AccountsTable is the table that holds the accounts relation/edge. The primary key declared below.
+	AccountsTable = "tenant_accounts"
+	// AccountsInverseTable is the table name for the Account entity.
+	// It exists in this package in order to avoid circular dependency with the "account" package.
+	AccountsInverseTable = "accounts"
 	// ModelCategoriesTable is the table that holds the model_categories relation/edge.
 	ModelCategoriesTable = "model_categories"
 	// ModelCategoriesInverseTable is the table name for the ModelCategory entity.
@@ -63,6 +70,7 @@ const (
 // Columns holds all SQL columns for tenant fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldTenantKey,
 	FieldName,
 	FieldDescription,
@@ -70,6 +78,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// AccountsPrimaryKey and AccountsColumn2 are the table columns denoting the
+	// primary key for the accounts relation (M2M).
+	AccountsPrimaryKey = []string{"tenant_id", "account_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -130,6 +144,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
 // ByTenantKey orders the results by the tenant_key field.
 func ByTenantKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTenantKey, opts...).ToFunc()
@@ -158,6 +177,20 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByAccountsCount orders the results by accounts count.
+func ByAccountsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAccountsStep(), opts...)
+	}
+}
+
+// ByAccounts orders the results by accounts terms.
+func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
 }
 
 // ByModelCategoriesCount orders the results by model_categories count.
@@ -201,6 +234,13 @@ func ByDevices(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newDevicesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+func newAccountsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AccountsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, AccountsTable, AccountsPrimaryKey...),
+	)
+}
 func newModelCategoriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -218,7 +258,7 @@ func newThingModelsStep() *sqlgraph.Step {
 func newDevicesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(DevicesInverseTable, DeviceFieldID),
+		sqlgraph.To(DevicesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, DevicesTable, DevicesColumn),
 	)
 }

@@ -12,9 +12,11 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/devicetelemetry"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/mqttuser"
 	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
 	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
 )
@@ -77,9 +79,11 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			account.Table:         account.ValidColumn,
 			device.Table:          device.ValidColumn,
 			devicetelemetry.Table: devicetelemetry.ValidColumn,
 			modelcategory.Table:   modelcategory.ValidColumn,
+			mqttuser.Table:        mqttuser.ValidColumn,
 			tenant.Table:          tenant.ValidColumn,
 			thingmodel.Table:      thingmodel.ValidColumn,
 		})

@@ -25,6 +25,13 @@ func (Tenant) Annotations() []schema.Annotation {
 	}
 }
 
+// Mixin of the Tenant.
+func (Tenant) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		SoftDeleteMixin{},
+	}
+}
+
 // Fields of the Tenant.
 func (Tenant) Fields() []ent.Field {
 	return []ent.Field{
@@ -56,6 +63,7 @@ func (Tenant) Fields() []ent.Field {
 // Edges of the Tenant.
 func (Tenant) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("accounts", Account.Type),
 		edge.To("model_categories", ModelCategory.Type),
 		edge.To("thing_models", ThingModel.Type),
 		edge.To("devices", Device.Type),

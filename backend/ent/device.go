@@ -19,13 +19,14 @@ import (
 type Device struct {
 	config `json:"-"`
 	// ID of the ent.
-	// 设备唯一标识，与 MQTT 客户端用户名一致
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// 软删除时间，非空表示已删除
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// 所属租户
 	TenantKey string `json:"tenant_key,omitempty"`
-	// 绑定的物模型标识，决定设备的数据结构和能力
+	// 绑定的物模型
 	ModelKey string `json:"model_key,omitempty"`
-	// 设备名称，用于前端展示
+	// 设备名称
 	DeviceName string `json:"device_name,omitempty"`
 	// 设备接入密钥，用于 MQTT 认证
 	AccessKey string `json:"access_key,omitempty"`
@@ -97,11 +98,11 @@ func (*Device) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case device.FieldOnline:
 			values[i] = new(sql.NullBool)
-		case device.FieldTenantID, device.FieldThingModelID:
+		case device.FieldID, device.FieldTenantID, device.FieldThingModelID:
 			values[i] = new(sql.NullInt64)
-		case device.FieldID, device.FieldTenantKey, device.FieldModelKey, device.FieldDeviceName, device.FieldAccessKey, device.FieldFirmwareVer, device.FieldStatus:
+		case device.FieldTenantKey, device.FieldModelKey, device.FieldDeviceName, device.FieldAccessKey, device.FieldFirmwareVer, device.FieldStatus:
 			values[i] = new(sql.NullString)
-		case device.FieldCreatedAt, device.FieldUpdatedAt, device.FieldLastSeen:
+		case device.FieldDeletedAt, device.FieldCreatedAt, device.FieldUpdatedAt, device.FieldLastSeen:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -119,10 +120,17 @@ func (_m *Device) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case device.FieldID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			_m.ID = int(value.Int64)
+		case device.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
-				_m.ID = value.String
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
 			}
 		case device.FieldTenantKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -259,6 +267,11 @@ func (_m *Device) String() string {
 	var builder strings.Builder
 	builder.WriteString("Device(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("tenant_key=")
 	builder.WriteString(_m.TenantKey)
 	builder.WriteString(", ")

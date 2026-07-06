@@ -20,6 +20,8 @@ type ThingModel struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// 软删除时间，非空表示已删除
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// 模型标识，如 temp_sensor_v1、smart_lock_v2
 	ModelKey string `json:"model_key,omitempty"`
 	// 所属租户
@@ -109,7 +111,7 @@ func (*ThingModel) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case thingmodel.FieldModelKey, thingmodel.FieldTenantKey, thingmodel.FieldName, thingmodel.FieldDescription, thingmodel.FieldCategory, thingmodel.FieldVersion, thingmodel.FieldStatus:
 			values[i] = new(sql.NullString)
-		case thingmodel.FieldCreatedAt, thingmodel.FieldUpdatedAt:
+		case thingmodel.FieldDeletedAt, thingmodel.FieldCreatedAt, thingmodel.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -132,6 +134,13 @@ func (_m *ThingModel) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
+		case thingmodel.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
+			}
 		case thingmodel.FieldModelKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field model_key", values[i])
@@ -273,6 +282,11 @@ func (_m *ThingModel) String() string {
 	var builder strings.Builder
 	builder.WriteString("ThingModel(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("model_key=")
 	builder.WriteString(_m.ModelKey)
 	builder.WriteString(", ")

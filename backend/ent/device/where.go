@@ -11,58 +11,53 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.Device {
+func ID(id int) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.Device {
+func IDEQ(id int) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.Device {
+func IDNEQ(id int) predicate.Device {
 	return predicate.Device(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.Device {
+func IDIn(ids ...int) predicate.Device {
 	return predicate.Device(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.Device {
+func IDNotIn(ids ...int) predicate.Device {
 	return predicate.Device(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.Device {
+func IDGT(id int) predicate.Device {
 	return predicate.Device(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.Device {
+func IDGTE(id int) predicate.Device {
 	return predicate.Device(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.Device {
+func IDLT(id int) predicate.Device {
 	return predicate.Device(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.Device {
+func IDLTE(id int) predicate.Device {
 	return predicate.Device(sql.FieldLTE(FieldID, id))
 }
 
-// IDEqualFold applies the EqualFold predicate on the ID field.
-func IDEqualFold(id string) predicate.Device {
-	return predicate.Device(sql.FieldEqualFold(FieldID, id))
-}
-
-// IDContainsFold applies the ContainsFold predicate on the ID field.
-func IDContainsFold(id string) predicate.Device {
-	return predicate.Device(sql.FieldContainsFold(FieldID, id))
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldEQ(FieldDeletedAt, v))
 }
 
 // TenantKey applies equality check predicate on the "tenant_key" field. It's identical to TenantKeyEQ.
@@ -118,6 +113,56 @@ func UpdatedAt(v time.Time) predicate.Device {
 // LastSeen applies equality check predicate on the "last_seen" field. It's identical to LastSeenEQ.
 func LastSeen(v time.Time) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldLastSeen, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.Device {
+	return predicate.Device(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.Device {
+	return predicate.Device(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.Device {
+	return predicate.Device(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.Device {
+	return predicate.Device(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.Device {
+	return predicate.Device(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // TenantKeyEQ applies the EQ predicate on the "tenant_key" field.

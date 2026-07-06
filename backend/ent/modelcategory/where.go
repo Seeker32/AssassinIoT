@@ -55,6 +55,11 @@ func IDLTE(id int) predicate.ModelCategory {
 	return predicate.ModelCategory(sql.FieldLTE(FieldID, id))
 }
 
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldEQ(FieldDeletedAt, v))
+}
+
 // TenantKey applies equality check predicate on the "tenant_key" field. It's identical to TenantKeyEQ.
 func TenantKey(v string) predicate.ModelCategory {
 	return predicate.ModelCategory(sql.FieldEQ(FieldTenantKey, v))
@@ -98,6 +103,56 @@ func CreatedAt(v time.Time) predicate.ModelCategory {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.ModelCategory {
 	return predicate.ModelCategory(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.ModelCategory {
+	return predicate.ModelCategory(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // TenantKeyEQ applies the EQ predicate on the "tenant_key" field.

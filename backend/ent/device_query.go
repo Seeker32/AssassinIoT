@@ -130,8 +130,8 @@ func (_q *DeviceQuery) FirstX(ctx context.Context) *Device {
 
 // FirstID returns the first Device ID from the query.
 // Returns a *NotFoundError when no Device ID was found.
-func (_q *DeviceQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (_q *DeviceQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -143,7 +143,7 @@ func (_q *DeviceQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *DeviceQuery) FirstIDX(ctx context.Context) string {
+func (_q *DeviceQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +181,8 @@ func (_q *DeviceQuery) OnlyX(ctx context.Context) *Device {
 // OnlyID is like Only, but returns the only Device ID in the query.
 // Returns a *NotSingularError when more than one Device ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *DeviceQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (_q *DeviceQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ func (_q *DeviceQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *DeviceQuery) OnlyIDX(ctx context.Context) string {
+func (_q *DeviceQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +226,7 @@ func (_q *DeviceQuery) AllX(ctx context.Context) []*Device {
 }
 
 // IDs executes the query and returns a list of Device IDs.
-func (_q *DeviceQuery) IDs(ctx context.Context) (ids []string, err error) {
+func (_q *DeviceQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
@@ -238,7 +238,7 @@ func (_q *DeviceQuery) IDs(ctx context.Context) (ids []string, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *DeviceQuery) IDsX(ctx context.Context) []string {
+func (_q *DeviceQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -334,12 +334,12 @@ func (_q *DeviceQuery) WithThingModel(opts ...func(*ThingModelQuery)) *DeviceQue
 // Example:
 //
 //	var v []struct {
-//		TenantKey string `json:"tenant_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Device.Query().
-//		GroupBy(device.FieldTenantKey).
+//		GroupBy(device.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *DeviceQuery) GroupBy(field string, fields ...string) *DeviceGroupBy {
@@ -357,11 +357,11 @@ func (_q *DeviceQuery) GroupBy(field string, fields ...string) *DeviceGroupBy {
 // Example:
 //
 //	var v []struct {
-//		TenantKey string `json:"tenant_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Device.Query().
-//		Select(device.FieldTenantKey).
+//		Select(device.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *DeviceQuery) Select(fields ...string) *DeviceSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -513,7 +513,7 @@ func (_q *DeviceQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (_q *DeviceQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
+	_spec := sqlgraph.NewQuerySpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

@@ -25,14 +25,16 @@ func (Device) Annotations() []schema.Annotation {
 	}
 }
 
+// Mixin of the Device.
+func (Device) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		SoftDeleteMixin{},
+	}
+}
+
 // Fields of the Device.
 func (Device) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").
-			StorageKey("dev_id").
-			NotEmpty().
-			Immutable().
-			Comment("设备唯一标识，与 MQTT 客户端用户名一致"),
 		field.String("tenant_key").
 			NotEmpty().
 			MaxLen(64).
@@ -40,11 +42,11 @@ func (Device) Fields() []ent.Field {
 		field.String("model_key").
 			NotEmpty().
 			MaxLen(64).
-			Comment("绑定的物模型标识，决定设备的数据结构和能力"),
+			Comment("绑定的物模型"),
 		field.String("device_name").
 			Default("").
 			MaxLen(128).
-			Comment("设备名称，用于前端展示"),
+			Comment("设备名称"),
 		field.String("access_key").
 			Unique().
 			NotEmpty().

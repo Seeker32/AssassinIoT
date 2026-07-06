@@ -55,6 +55,11 @@ func IDLTE(id int) predicate.ThingModel {
 	return predicate.ThingModel(sql.FieldLTE(FieldID, id))
 }
 
+// DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
+func DeletedAt(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldEQ(FieldDeletedAt, v))
+}
+
 // ModelKey applies equality check predicate on the "model_key" field. It's identical to ModelKeyEQ.
 func ModelKey(v string) predicate.ThingModel {
 	return predicate.ThingModel(sql.FieldEQ(FieldModelKey, v))
@@ -103,6 +108,56 @@ func CreatedAt(v time.Time) predicate.ThingModel {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.ThingModel {
 	return predicate.ThingModel(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
+func DeletedAtEQ(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
+func DeletedAtNEQ(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldNEQ(FieldDeletedAt, v))
+}
+
+// DeletedAtIn applies the In predicate on the "deleted_at" field.
+func DeletedAtIn(vs ...time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
+func DeletedAtNotIn(vs ...time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldNotIn(FieldDeletedAt, vs...))
+}
+
+// DeletedAtGT applies the GT predicate on the "deleted_at" field.
+func DeletedAtGT(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldGT(FieldDeletedAt, v))
+}
+
+// DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
+func DeletedAtGTE(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldGTE(FieldDeletedAt, v))
+}
+
+// DeletedAtLT applies the LT predicate on the "deleted_at" field.
+func DeletedAtLT(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldLT(FieldDeletedAt, v))
+}
+
+// DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
+func DeletedAtLTE(v time.Time) predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldLTE(FieldDeletedAt, v))
+}
+
+// DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
+func DeletedAtIsNil() predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldIsNull(FieldDeletedAt))
+}
+
+// DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
+func DeletedAtNotNil() predicate.ThingModel {
+	return predicate.ThingModel(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // ModelKeyEQ applies the EQ predicate on the "model_key" field.

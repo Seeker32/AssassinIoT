@@ -15,6 +15,8 @@ const (
 	Label = "thing_model"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldModelKey holds the string denoting the model_key field in the database.
 	FieldModelKey = "model_key"
 	// FieldTenantKey holds the string denoting the tenant_key field in the database.
@@ -49,8 +51,6 @@ const (
 	EdgeModelCategory = "model_category"
 	// EdgeDevices holds the string denoting the devices edge name in mutations.
 	EdgeDevices = "devices"
-	// DeviceFieldID holds the string denoting the ID field of the Device.
-	DeviceFieldID = "dev_id"
 	// Table holds the table name of the thingmodel in the database.
 	Table = "thing_models"
 	// TenantTable is the table that holds the tenant relation/edge.
@@ -79,6 +79,7 @@ const (
 // Columns holds all SQL columns for thingmodel fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldModelKey,
 	FieldTenantKey,
 	FieldName,
@@ -167,6 +168,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByModelKey orders the results by the model_key field.
@@ -268,7 +274,7 @@ func newModelCategoryStep() *sqlgraph.Step {
 func newDevicesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(DevicesInverseTable, DeviceFieldID),
+		sqlgraph.To(DevicesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, DevicesTable, DevicesColumn),
 	)
 }

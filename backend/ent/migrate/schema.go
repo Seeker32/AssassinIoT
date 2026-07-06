@@ -9,9 +9,50 @@ import (
 )
 
 var (
+	// AccountsColumns holds the columns for the "accounts" table.
+	AccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "username", Type: field.TypeString},
+		{Name: "password", Type: field.TypeString},
+		{Name: "email", Type: field.TypeString},
+		{Name: "avatar_url", Type: field.TypeString},
+		{Name: "tenant_id", Type: field.TypeInt},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// AccountsTable holds the schema information for the "accounts" table.
+	AccountsTable = &schema.Table{
+		Name:       "accounts",
+		Columns:    AccountsColumns,
+		PrimaryKey: []*schema.Column{AccountsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "account_tenant_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[6]},
+			},
+			{
+				Name:    "account_email",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[4]},
+			},
+			{
+				Name:    "account_username",
+				Unique:  false,
+				Columns: []*schema.Column{AccountsColumns[2]},
+			},
+			{
+				Name:    "account_tenant_id_email",
+				Unique:  true,
+				Columns: []*schema.Column{AccountsColumns[6], AccountsColumns[4]},
+			},
+		},
+	}
 	// DevicesColumns holds the columns for the "devices" table.
 	DevicesColumns = []*schema.Column{
-		{Name: "dev_id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "tenant_key", Type: field.TypeString, Size: 64},
 		{Name: "model_key", Type: field.TypeString, Size: 64},
 		{Name: "device_name", Type: field.TypeString, Size: 128, Default: ""},
@@ -35,13 +76,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "devices_tenants_devices",
-				Columns:    []*schema.Column{DevicesColumns[13]},
+				Columns:    []*schema.Column{DevicesColumns[14]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "devices_thing_models_devices",
-				Columns:    []*schema.Column{DevicesColumns[14]},
+				Columns:    []*schema.Column{DevicesColumns[15]},
 				RefColumns: []*schema.Column{ThingModelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -50,28 +91,29 @@ var (
 			{
 				Name:    "device_tenant_key",
 				Unique:  false,
-				Columns: []*schema.Column{DevicesColumns[1]},
+				Columns: []*schema.Column{DevicesColumns[2]},
 			},
 			{
 				Name:    "device_tenant_key_model_key",
 				Unique:  false,
-				Columns: []*schema.Column{DevicesColumns[1], DevicesColumns[2]},
+				Columns: []*schema.Column{DevicesColumns[2], DevicesColumns[3]},
 			},
 			{
 				Name:    "device_status",
 				Unique:  false,
-				Columns: []*schema.Column{DevicesColumns[7]},
+				Columns: []*schema.Column{DevicesColumns[8]},
 			},
 			{
 				Name:    "device_tenant_key_status",
 				Unique:  false,
-				Columns: []*schema.Column{DevicesColumns[1], DevicesColumns[7]},
+				Columns: []*schema.Column{DevicesColumns[2], DevicesColumns[8]},
 			},
 		},
 	}
 	// ModelCategoriesColumns holds the columns for the "model_categories" table.
 	ModelCategoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "tenant_key", Type: field.TypeString, Size: 64},
 		{Name: "category_key", Type: field.TypeString, Size: 64},
 		{Name: "display_name", Type: field.TypeString, Size: 128},
@@ -91,7 +133,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "model_categories_tenants_model_categories",
-				Columns:    []*schema.Column{ModelCategoriesColumns[10]},
+				Columns:    []*schema.Column{ModelCategoriesColumns[11]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -100,23 +142,47 @@ var (
 			{
 				Name:    "modelcategory_tenant_key_category_key",
 				Unique:  true,
-				Columns: []*schema.Column{ModelCategoriesColumns[1], ModelCategoriesColumns[2]},
+				Columns: []*schema.Column{ModelCategoriesColumns[2], ModelCategoriesColumns[3]},
 			},
 			{
 				Name:    "modelcategory_tenant_key",
 				Unique:  false,
-				Columns: []*schema.Column{ModelCategoriesColumns[1]},
+				Columns: []*schema.Column{ModelCategoriesColumns[2]},
 			},
 			{
 				Name:    "modelcategory_tenant_key_sort_order",
 				Unique:  false,
-				Columns: []*schema.Column{ModelCategoriesColumns[1], ModelCategoriesColumns[6]},
+				Columns: []*schema.Column{ModelCategoriesColumns[2], ModelCategoriesColumns[7]},
+			},
+		},
+	}
+	// MqttUserColumns holds the columns for the "mqtt_user" table.
+	MqttUserColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "username", Type: field.TypeString, Unique: true, Size: 128},
+		{Name: "password_hash", Type: field.TypeString, Size: 256},
+		{Name: "salt", Type: field.TypeString, Size: 64},
+		{Name: "is_superuser", Type: field.TypeBool, Default: false},
+		{Name: "created", Type: field.TypeTime},
+	}
+	// MqttUserTable holds the schema information for the "mqtt_user" table.
+	MqttUserTable = &schema.Table{
+		Name:       "mqtt_user",
+		Columns:    MqttUserColumns,
+		PrimaryKey: []*schema.Column{MqttUserColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "mqttuser_username",
+				Unique:  true,
+				Columns: []*schema.Column{MqttUserColumns[2]},
 			},
 		},
 	}
 	// TenantsColumns holds the columns for the "tenants" table.
 	TenantsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "tenant_key", Type: field.TypeString, Unique: true, Size: 64},
 		{Name: "name", Type: field.TypeString, Size: 128},
 		{Name: "description", Type: field.TypeString, Size: 2147483647, Default: ""},
@@ -133,13 +199,14 @@ var (
 			{
 				Name:    "tenant_tenant_key",
 				Unique:  true,
-				Columns: []*schema.Column{TenantsColumns[1]},
+				Columns: []*schema.Column{TenantsColumns[2]},
 			},
 		},
 	}
 	// ThingModelsColumns holds the columns for the "thing_models" table.
 	ThingModelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
 		{Name: "model_key", Type: field.TypeString, Unique: true, Size: 64},
 		{Name: "tenant_key", Type: field.TypeString, Size: 64},
 		{Name: "name", Type: field.TypeString, Size: 128},
@@ -163,13 +230,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "thing_models_model_categories_thing_models",
-				Columns:    []*schema.Column{ThingModelsColumns[13]},
+				Columns:    []*schema.Column{ThingModelsColumns[14]},
 				RefColumns: []*schema.Column{ModelCategoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "thing_models_tenants_thing_models",
-				Columns:    []*schema.Column{ThingModelsColumns[14]},
+				Columns:    []*schema.Column{ThingModelsColumns[15]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -178,25 +245,56 @@ var (
 			{
 				Name:    "thingmodel_tenant_key",
 				Unique:  false,
-				Columns: []*schema.Column{ThingModelsColumns[2]},
+				Columns: []*schema.Column{ThingModelsColumns[3]},
 			},
 			{
 				Name:    "thingmodel_tenant_key_category",
 				Unique:  false,
-				Columns: []*schema.Column{ThingModelsColumns[2], ThingModelsColumns[5]},
+				Columns: []*schema.Column{ThingModelsColumns[3], ThingModelsColumns[6]},
+			},
+		},
+	}
+	// TenantAccountsColumns holds the columns for the "tenant_accounts" table.
+	TenantAccountsColumns = []*schema.Column{
+		{Name: "tenant_id", Type: field.TypeInt},
+		{Name: "account_id", Type: field.TypeInt},
+	}
+	// TenantAccountsTable holds the schema information for the "tenant_accounts" table.
+	TenantAccountsTable = &schema.Table{
+		Name:       "tenant_accounts",
+		Columns:    TenantAccountsColumns,
+		PrimaryKey: []*schema.Column{TenantAccountsColumns[0], TenantAccountsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tenant_accounts_tenant_id",
+				Columns:    []*schema.Column{TenantAccountsColumns[0]},
+				RefColumns: []*schema.Column{TenantsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "tenant_accounts_account_id",
+				Columns:    []*schema.Column{TenantAccountsColumns[1]},
+				RefColumns: []*schema.Column{AccountsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AccountsTable,
 		DevicesTable,
 		ModelCategoriesTable,
+		MqttUserTable,
 		TenantsTable,
 		ThingModelsTable,
+		TenantAccountsTable,
 	}
 )
 
 func init() {
+	AccountsTable.Annotation = &entsql.Annotation{
+		Table: "accounts",
+	}
 	DevicesTable.ForeignKeys[0].RefTable = TenantsTable
 	DevicesTable.ForeignKeys[1].RefTable = ThingModelsTable
 	DevicesTable.Annotation = &entsql.Annotation{
@@ -206,6 +304,9 @@ func init() {
 	ModelCategoriesTable.Annotation = &entsql.Annotation{
 		Table: "model_categories",
 	}
+	MqttUserTable.Annotation = &entsql.Annotation{
+		Table: "mqtt_user",
+	}
 	TenantsTable.Annotation = &entsql.Annotation{
 		Table: "tenants",
 	}
@@ -214,4 +315,6 @@ func init() {
 	ThingModelsTable.Annotation = &entsql.Annotation{
 		Table: "thing_models",
 	}
+	TenantAccountsTable.ForeignKeys[0].RefTable = TenantsTable
+	TenantAccountsTable.ForeignKeys[1].RefTable = AccountsTable
 }

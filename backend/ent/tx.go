@@ -12,12 +12,16 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Account is the client for interacting with the Account builders.
+	Account *AccountClient
 	// Device is the client for interacting with the Device builders.
 	Device *DeviceClient
 	// DeviceTelemetry is the client for interacting with the DeviceTelemetry builders.
 	DeviceTelemetry *DeviceTelemetryClient
 	// ModelCategory is the client for interacting with the ModelCategory builders.
 	ModelCategory *ModelCategoryClient
+	// MqttUser is the client for interacting with the MqttUser builders.
+	MqttUser *MqttUserClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
 	// ThingModel is the client for interacting with the ThingModel builders.
@@ -153,9 +157,11 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Account = NewAccountClient(tx.config)
 	tx.Device = NewDeviceClient(tx.config)
 	tx.DeviceTelemetry = NewDeviceTelemetryClient(tx.config)
 	tx.ModelCategory = NewModelCategoryClient(tx.config)
+	tx.MqttUser = NewMqttUserClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
 	tx.ThingModel = NewThingModelClient(tx.config)
 }
@@ -167,7 +173,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Device.QueryXXX(), the query will be executed
+// applies a query, for example: Account.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -22,6 +22,20 @@ type DeviceCreate struct {
 	hooks    []Hook
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *DeviceCreate) SetDeletedAt(v time.Time) *DeviceCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *DeviceCreate) SetNillableDeletedAt(v *time.Time) *DeviceCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
 // SetTenantKey sets the "tenant_key" field.
 func (_c *DeviceCreate) SetTenantKey(v string) *DeviceCreate {
 	_c.mutation.SetTenantKey(v)
@@ -159,12 +173,6 @@ func (_c *DeviceCreate) SetNillableLastSeen(v *time.Time) *DeviceCreate {
 	if v != nil {
 		_c.SetLastSeen(*v)
 	}
-	return _c
-}
-
-// SetID sets the "id" field.
-func (_c *DeviceCreate) SetID(v string) *DeviceCreate {
-	_c.mutation.SetID(v)
 	return _c
 }
 
@@ -318,11 +326,6 @@ func (_c *DeviceCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Device.updated_at"`)}
 	}
-	if v, ok := _c.mutation.ID(); ok {
-		if err := device.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Device.id": %w`, err)}
-		}
-	}
 	if len(_c.mutation.TenantIDs()) == 0 {
 		return &ValidationError{Name: "tenant", err: errors.New(`ent: missing required edge "Device.tenant"`)}
 	}
@@ -343,13 +346,8 @@ func (_c *DeviceCreate) sqlSave(ctx context.Context) (*Device, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected Device.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -358,11 +356,11 @@ func (_c *DeviceCreate) sqlSave(ctx context.Context) (*Device, error) {
 func (_c *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Device{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
+		_spec = sqlgraph.NewCreateSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	)
-	if id, ok := _c.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(device.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
 	}
 	if value, ok := _c.mutation.TenantKey(); ok {
 		_spec.SetField(device.FieldTenantKey, field.TypeString, value)
@@ -494,6 +492,10 @@ func (_c *DeviceCreateBulk) Save(ctx context.Context) ([]*Device, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})

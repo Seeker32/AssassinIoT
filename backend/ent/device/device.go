@@ -14,7 +14,9 @@ const (
 	// Label holds the string label denoting the device type in the database.
 	Label = "device"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "dev_id"
+	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldTenantKey holds the string denoting the tenant_key field in the database.
 	FieldTenantKey = "tenant_key"
 	// FieldModelKey holds the string denoting the model_key field in the database.
@@ -47,10 +49,6 @@ const (
 	EdgeTenant = "tenant"
 	// EdgeThingModel holds the string denoting the thing_model edge name in mutations.
 	EdgeThingModel = "thing_model"
-	// TenantFieldID holds the string denoting the ID field of the Tenant.
-	TenantFieldID = "id"
-	// ThingModelFieldID holds the string denoting the ID field of the ThingModel.
-	ThingModelFieldID = "id"
 	// Table holds the table name of the device in the database.
 	Table = "devices"
 	// TenantTable is the table that holds the tenant relation/edge.
@@ -72,6 +70,7 @@ const (
 // Columns holds all SQL columns for device fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldTenantKey,
 	FieldModelKey,
 	FieldDeviceName,
@@ -125,8 +124,6 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
 )
 
 // Status defines the type for the "status" enum field.
@@ -162,6 +159,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByTenantKey orders the results by the tenant_key field.
@@ -240,14 +242,14 @@ func ByThingModelField(field string, opts ...sql.OrderTermOption) OrderOption {
 func newTenantStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TenantInverseTable, TenantFieldID),
+		sqlgraph.To(TenantInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TenantTable, TenantColumn),
 	)
 }
 func newThingModelStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ThingModelInverseTable, ThingModelFieldID),
+		sqlgraph.To(ThingModelInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, ThingModelTable, ThingModelColumn),
 	)
 }

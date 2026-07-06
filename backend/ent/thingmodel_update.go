@@ -31,6 +31,26 @@ func (_u *ThingModelUpdate) Where(ps ...predicate.ThingModel) *ThingModelUpdate 
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ThingModelUpdate) SetDeletedAt(v time.Time) *ThingModelUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ThingModelUpdate) SetNillableDeletedAt(v *time.Time) *ThingModelUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ThingModelUpdate) ClearDeletedAt() *ThingModelUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetModelKey sets the "model_key" field.
 func (_u *ThingModelUpdate) SetModelKey(v string) *ThingModelUpdate {
 	_u.mutation.SetModelKey(v)
@@ -192,14 +212,14 @@ func (_u *ThingModelUpdate) SetModelCategory(v *ModelCategory) *ThingModelUpdate
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_u *ThingModelUpdate) AddDeviceIDs(ids ...string) *ThingModelUpdate {
+func (_u *ThingModelUpdate) AddDeviceIDs(ids ...int) *ThingModelUpdate {
 	_u.mutation.AddDeviceIDs(ids...)
 	return _u
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_u *ThingModelUpdate) AddDevices(v ...*Device) *ThingModelUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -230,14 +250,14 @@ func (_u *ThingModelUpdate) ClearDevices() *ThingModelUpdate {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (_u *ThingModelUpdate) RemoveDeviceIDs(ids ...string) *ThingModelUpdate {
+func (_u *ThingModelUpdate) RemoveDeviceIDs(ids ...int) *ThingModelUpdate {
 	_u.mutation.RemoveDeviceIDs(ids...)
 	return _u
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (_u *ThingModelUpdate) RemoveDevices(v ...*Device) *ThingModelUpdate {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -332,6 +352,12 @@ func (_u *ThingModelUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(thingmodel.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(thingmodel.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ModelKey(); ok {
 		_spec.SetField(thingmodel.FieldModelKey, field.TypeString, value)
@@ -432,7 +458,7 @@ func (_u *ThingModelUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -445,7 +471,7 @@ func (_u *ThingModelUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -461,7 +487,7 @@ func (_u *ThingModelUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -487,6 +513,26 @@ type ThingModelUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ThingModelMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ThingModelUpdateOne) SetDeletedAt(v time.Time) *ThingModelUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ThingModelUpdateOne) SetNillableDeletedAt(v *time.Time) *ThingModelUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ThingModelUpdateOne) ClearDeletedAt() *ThingModelUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetModelKey sets the "model_key" field.
@@ -650,14 +696,14 @@ func (_u *ThingModelUpdateOne) SetModelCategory(v *ModelCategory) *ThingModelUpd
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (_u *ThingModelUpdateOne) AddDeviceIDs(ids ...string) *ThingModelUpdateOne {
+func (_u *ThingModelUpdateOne) AddDeviceIDs(ids ...int) *ThingModelUpdateOne {
 	_u.mutation.AddDeviceIDs(ids...)
 	return _u
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (_u *ThingModelUpdateOne) AddDevices(v ...*Device) *ThingModelUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -688,14 +734,14 @@ func (_u *ThingModelUpdateOne) ClearDevices() *ThingModelUpdateOne {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (_u *ThingModelUpdateOne) RemoveDeviceIDs(ids ...string) *ThingModelUpdateOne {
+func (_u *ThingModelUpdateOne) RemoveDeviceIDs(ids ...int) *ThingModelUpdateOne {
 	_u.mutation.RemoveDeviceIDs(ids...)
 	return _u
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (_u *ThingModelUpdateOne) RemoveDevices(v ...*Device) *ThingModelUpdateOne {
-	ids := make([]string, len(v))
+	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
@@ -821,6 +867,12 @@ func (_u *ThingModelUpdateOne) sqlSave(ctx context.Context) (_node *ThingModel, 
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(thingmodel.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(thingmodel.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.ModelKey(); ok {
 		_spec.SetField(thingmodel.FieldModelKey, field.TypeString, value)
 	}
@@ -920,7 +972,7 @@ func (_u *ThingModelUpdateOne) sqlSave(ctx context.Context) (_node *ThingModel, 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -933,7 +985,7 @@ func (_u *ThingModelUpdateOne) sqlSave(ctx context.Context) (_node *ThingModel, 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -949,7 +1001,7 @@ func (_u *ThingModelUpdateOne) sqlSave(ctx context.Context) (_node *ThingModel, 
 			Columns: []string{thingmodel.DevicesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

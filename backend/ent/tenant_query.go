@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
 	"github.com/Seeker32/AssassinIoT/backend/ent/predicate"
@@ -26,6 +27,7 @@ type TenantQuery struct {
 	order               []tenant.OrderOption
 	inters              []Interceptor
 	predicates          []predicate.Tenant
+	withAccounts        *AccountQuery
 	withModelCategories *ModelCategoryQuery
 	withThingModels     *ThingModelQuery
 	withDevices         *DeviceQuery
@@ -63,6 +65,28 @@ func (_q *TenantQuery) Unique(unique bool) *TenantQuery {
 func (_q *TenantQuery) Order(o ...tenant.OrderOption) *TenantQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryAccounts chains the current query on the "accounts" edge.
+func (_q *TenantQuery) QueryAccounts() *AccountQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenant.Table, tenant.FieldID, selector),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, tenant.AccountsTable, tenant.AccountsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryModelCategories chains the current query on the "model_categories" edge.
@@ -323,6 +347,7 @@ func (_q *TenantQuery) Clone() *TenantQuery {
 		order:               append([]tenant.OrderOption{}, _q.order...),
 		inters:              append([]Interceptor{}, _q.inters...),
 		predicates:          append([]predicate.Tenant{}, _q.predicates...),
+		withAccounts:        _q.withAccounts.Clone(),
 		withModelCategories: _q.withModelCategories.Clone(),
 		withThingModels:     _q.withThingModels.Clone(),
 		withDevices:         _q.withDevices.Clone(),
@@ -330,6 +355,17 @@ func (_q *TenantQuery) Clone() *TenantQuery {
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithAccounts tells the query-builder to eager-load the nodes that are connected to
+// the "accounts" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TenantQuery) WithAccounts(opts ...func(*AccountQuery)) *TenantQuery {
+	query := (&AccountClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAccounts = query
+	return _q
 }
 
 // WithModelCategories tells the query-builder to eager-load the nodes that are connected to
@@ -371,12 +407,12 @@ func (_q *TenantQuery) WithDevices(opts ...func(*DeviceQuery)) *TenantQuery {
 // Example:
 //
 //	var v []struct {
-//		TenantKey string `json:"tenant_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Tenant.Query().
-//		GroupBy(tenant.FieldTenantKey).
+//		GroupBy(tenant.FieldDeletedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *TenantQuery) GroupBy(field string, fields ...string) *TenantGroupBy {
@@ -394,11 +430,11 @@ func (_q *TenantQuery) GroupBy(field string, fields ...string) *TenantGroupBy {
 // Example:
 //
 //	var v []struct {
-//		TenantKey string `json:"tenant_key,omitempty"`
+//		DeletedAt time.Time `json:"deleted_at,omitempty"`
 //	}
 //
 //	client.Tenant.Query().
-//		Select(tenant.FieldTenantKey).
+//		Select(tenant.FieldDeletedAt).
 //		Scan(ctx, &v)
 func (_q *TenantQuery) Select(fields ...string) *TenantSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -443,7 +479,8 @@ func (_q *TenantQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tenan
 	var (
 		nodes       = []*Tenant{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
+			_q.withAccounts != nil,
 			_q.withModelCategories != nil,
 			_q.withThingModels != nil,
 			_q.withDevices != nil,
@@ -466,6 +503,13 @@ func (_q *TenantQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tenan
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
+	}
+	if query := _q.withAccounts; query != nil {
+		if err := _q.loadAccounts(ctx, query, nodes,
+			func(n *Tenant) { n.Edges.Accounts = []*Account{} },
+			func(n *Tenant, e *Account) { n.Edges.Accounts = append(n.Edges.Accounts, e) }); err != nil {
+			return nil, err
+		}
 	}
 	if query := _q.withModelCategories; query != nil {
 		if err := _q.loadModelCategories(ctx, query, nodes,
@@ -491,6 +535,67 @@ func (_q *TenantQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tenan
 	return nodes, nil
 }
 
+func (_q *TenantQuery) loadAccounts(ctx context.Context, query *AccountQuery, nodes []*Tenant, init func(*Tenant), assign func(*Tenant, *Account)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Tenant)
+	nids := make(map[int]map[*Tenant]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(tenant.AccountsTable)
+		s.Join(joinT).On(s.C(account.FieldID), joinT.C(tenant.AccountsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(tenant.AccountsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(tenant.AccountsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Tenant]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Account](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "accounts" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 func (_q *TenantQuery) loadModelCategories(ctx context.Context, query *ModelCategoryQuery, nodes []*Tenant, init func(*Tenant), assign func(*Tenant, *ModelCategory)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Tenant)

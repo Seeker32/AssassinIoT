@@ -15,6 +15,8 @@ const (
 	Label = "model_category"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
 	// FieldTenantKey holds the string denoting the tenant_key field in the database.
 	FieldTenantKey = "tenant_key"
 	// FieldCategoryKey holds the string denoting the category_key field in the database.
@@ -60,6 +62,7 @@ const (
 // Columns holds all SQL columns for modelcategory fields.
 var Columns = []string{
 	FieldID,
+	FieldDeletedAt,
 	FieldTenantKey,
 	FieldCategoryKey,
 	FieldDisplayName,
@@ -137,6 +140,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
 }
 
 // ByTenantKey orders the results by the tenant_key field.

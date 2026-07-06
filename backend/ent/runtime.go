@@ -5,9 +5,11 @@ package ent
 import (
 	"time"
 
+	"github.com/Seeker32/AssassinIoT/backend/ent/account"
 	"github.com/Seeker32/AssassinIoT/backend/ent/device"
 	"github.com/Seeker32/AssassinIoT/backend/ent/devicetelemetry"
 	"github.com/Seeker32/AssassinIoT/backend/ent/modelcategory"
+	"github.com/Seeker32/AssassinIoT/backend/ent/mqttuser"
 	"github.com/Seeker32/AssassinIoT/backend/ent/schema"
 	"github.com/Seeker32/AssassinIoT/backend/ent/tenant"
 	"github.com/Seeker32/AssassinIoT/backend/ent/thingmodel"
@@ -17,10 +19,22 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	accountFields := schema.Account{}.Fields()
+	_ = accountFields
+	// accountDescCreatedAt is the schema descriptor for created_at field.
+	accountDescCreatedAt := accountFields[5].Descriptor()
+	// account.DefaultCreatedAt holds the default value on creation for the created_at field.
+	account.DefaultCreatedAt = accountDescCreatedAt.Default.(func() time.Time)
+	// accountDescUpdatedAt is the schema descriptor for updated_at field.
+	accountDescUpdatedAt := accountFields[6].Descriptor()
+	// account.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	account.DefaultUpdatedAt = accountDescUpdatedAt.Default.(func() time.Time)
+	// account.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	account.UpdateDefaultUpdatedAt = accountDescUpdatedAt.UpdateDefault.(func() time.Time)
 	deviceFields := schema.Device{}.Fields()
 	_ = deviceFields
 	// deviceDescTenantKey is the schema descriptor for tenant_key field.
-	deviceDescTenantKey := deviceFields[1].Descriptor()
+	deviceDescTenantKey := deviceFields[0].Descriptor()
 	// device.TenantKeyValidator is a validator for the "tenant_key" field. It is called by the builders before save.
 	device.TenantKeyValidator = func() func(string) error {
 		validators := deviceDescTenantKey.Validators
@@ -38,7 +52,7 @@ func init() {
 		}
 	}()
 	// deviceDescModelKey is the schema descriptor for model_key field.
-	deviceDescModelKey := deviceFields[2].Descriptor()
+	deviceDescModelKey := deviceFields[1].Descriptor()
 	// device.ModelKeyValidator is a validator for the "model_key" field. It is called by the builders before save.
 	device.ModelKeyValidator = func() func(string) error {
 		validators := deviceDescModelKey.Validators
@@ -56,13 +70,13 @@ func init() {
 		}
 	}()
 	// deviceDescDeviceName is the schema descriptor for device_name field.
-	deviceDescDeviceName := deviceFields[3].Descriptor()
+	deviceDescDeviceName := deviceFields[2].Descriptor()
 	// device.DefaultDeviceName holds the default value on creation for the device_name field.
 	device.DefaultDeviceName = deviceDescDeviceName.Default.(string)
 	// device.DeviceNameValidator is a validator for the "device_name" field. It is called by the builders before save.
 	device.DeviceNameValidator = deviceDescDeviceName.Validators[0].(func(string) error)
 	// deviceDescAccessKey is the schema descriptor for access_key field.
-	deviceDescAccessKey := deviceFields[4].Descriptor()
+	deviceDescAccessKey := deviceFields[3].Descriptor()
 	// device.AccessKeyValidator is a validator for the "access_key" field. It is called by the builders before save.
 	device.AccessKeyValidator = func() func(string) error {
 		validators := deviceDescAccessKey.Validators
@@ -80,37 +94,33 @@ func init() {
 		}
 	}()
 	// deviceDescFirmwareVer is the schema descriptor for firmware_ver field.
-	deviceDescFirmwareVer := deviceFields[5].Descriptor()
+	deviceDescFirmwareVer := deviceFields[4].Descriptor()
 	// device.DefaultFirmwareVer holds the default value on creation for the firmware_ver field.
 	device.DefaultFirmwareVer = deviceDescFirmwareVer.Default.(string)
 	// device.FirmwareVerValidator is a validator for the "firmware_ver" field. It is called by the builders before save.
 	device.FirmwareVerValidator = deviceDescFirmwareVer.Validators[0].(func(string) error)
 	// deviceDescPropertiesCfg is the schema descriptor for properties_cfg field.
-	deviceDescPropertiesCfg := deviceFields[6].Descriptor()
+	deviceDescPropertiesCfg := deviceFields[5].Descriptor()
 	// device.DefaultPropertiesCfg holds the default value on creation for the properties_cfg field.
 	device.DefaultPropertiesCfg = deviceDescPropertiesCfg.Default.(map[string]interface{})
 	// deviceDescOnline is the schema descriptor for online field.
-	deviceDescOnline := deviceFields[10].Descriptor()
+	deviceDescOnline := deviceFields[9].Descriptor()
 	// device.DefaultOnline holds the default value on creation for the online field.
 	device.DefaultOnline = deviceDescOnline.Default.(bool)
 	// deviceDescMetadata is the schema descriptor for metadata field.
-	deviceDescMetadata := deviceFields[11].Descriptor()
+	deviceDescMetadata := deviceFields[10].Descriptor()
 	// device.DefaultMetadata holds the default value on creation for the metadata field.
 	device.DefaultMetadata = deviceDescMetadata.Default.(map[string]interface{})
 	// deviceDescCreatedAt is the schema descriptor for created_at field.
-	deviceDescCreatedAt := deviceFields[12].Descriptor()
+	deviceDescCreatedAt := deviceFields[11].Descriptor()
 	// device.DefaultCreatedAt holds the default value on creation for the created_at field.
 	device.DefaultCreatedAt = deviceDescCreatedAt.Default.(func() time.Time)
 	// deviceDescUpdatedAt is the schema descriptor for updated_at field.
-	deviceDescUpdatedAt := deviceFields[13].Descriptor()
+	deviceDescUpdatedAt := deviceFields[12].Descriptor()
 	// device.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	device.DefaultUpdatedAt = deviceDescUpdatedAt.Default.(func() time.Time)
 	// device.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	device.UpdateDefaultUpdatedAt = deviceDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// deviceDescID is the schema descriptor for id field.
-	deviceDescID := deviceFields[0].Descriptor()
-	// device.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	device.IDValidator = deviceDescID.Validators[0].(func(string) error)
 	devicetelemetryFields := schema.DeviceTelemetry{}.Fields()
 	_ = devicetelemetryFields
 	// devicetelemetryDescCreatedAt is the schema descriptor for created_at field.
@@ -197,6 +207,70 @@ func init() {
 	modelcategory.DefaultUpdatedAt = modelcategoryDescUpdatedAt.Default.(func() time.Time)
 	// modelcategory.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	modelcategory.UpdateDefaultUpdatedAt = modelcategoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	mqttuserFields := schema.MqttUser{}.Fields()
+	_ = mqttuserFields
+	// mqttuserDescUsername is the schema descriptor for username field.
+	mqttuserDescUsername := mqttuserFields[0].Descriptor()
+	// mqttuser.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
+	mqttuser.UsernameValidator = func() func(string) error {
+		validators := mqttuserDescUsername.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(username string) error {
+			for _, fn := range fns {
+				if err := fn(username); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// mqttuserDescPasswordHash is the schema descriptor for password_hash field.
+	mqttuserDescPasswordHash := mqttuserFields[1].Descriptor()
+	// mqttuser.PasswordHashValidator is a validator for the "password_hash" field. It is called by the builders before save.
+	mqttuser.PasswordHashValidator = func() func(string) error {
+		validators := mqttuserDescPasswordHash.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(password_hash string) error {
+			for _, fn := range fns {
+				if err := fn(password_hash); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// mqttuserDescSalt is the schema descriptor for salt field.
+	mqttuserDescSalt := mqttuserFields[2].Descriptor()
+	// mqttuser.SaltValidator is a validator for the "salt" field. It is called by the builders before save.
+	mqttuser.SaltValidator = func() func(string) error {
+		validators := mqttuserDescSalt.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(salt string) error {
+			for _, fn := range fns {
+				if err := fn(salt); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// mqttuserDescIsSuperuser is the schema descriptor for is_superuser field.
+	mqttuserDescIsSuperuser := mqttuserFields[3].Descriptor()
+	// mqttuser.DefaultIsSuperuser holds the default value on creation for the is_superuser field.
+	mqttuser.DefaultIsSuperuser = mqttuserDescIsSuperuser.Default.(bool)
+	// mqttuserDescCreated is the schema descriptor for created field.
+	mqttuserDescCreated := mqttuserFields[4].Descriptor()
+	// mqttuser.DefaultCreated holds the default value on creation for the created field.
+	mqttuser.DefaultCreated = mqttuserDescCreated.Default.(func() time.Time)
 	tenantFields := schema.Tenant{}.Fields()
 	_ = tenantFields
 	// tenantDescTenantKey is the schema descriptor for tenant_key field.

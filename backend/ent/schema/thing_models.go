@@ -25,6 +25,13 @@ func (ThingModel) Annotations() []schema.Annotation {
 	}
 }
 
+// Mixin of the ThingModel.
+func (ThingModel) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		SoftDeleteMixin{},
+	}
+}
+
 // Fields of the ThingModel.
 func (ThingModel) Fields() []ent.Field {
 	return []ent.Field{

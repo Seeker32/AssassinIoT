@@ -25,6 +25,13 @@ func (ModelCategory) Annotations() []schema.Annotation {
 	}
 }
 
+// Mixin of the ModelCategory.
+func (ModelCategory) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		SoftDeleteMixin{},
+	}
+}
+
 // Fields of the ModelCategory.
 func (ModelCategory) Fields() []ent.Field {
 	return []ent.Field{

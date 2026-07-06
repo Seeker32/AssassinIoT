@@ -30,6 +30,26 @@ func (_u *ModelCategoryUpdate) Where(ps ...predicate.ModelCategory) *ModelCatego
 	return _u
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ModelCategoryUpdate) SetDeletedAt(v time.Time) *ModelCategoryUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ModelCategoryUpdate) SetNillableDeletedAt(v *time.Time) *ModelCategoryUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ModelCategoryUpdate) ClearDeletedAt() *ModelCategoryUpdate {
+	_u.mutation.ClearDeletedAt()
+	return _u
+}
+
 // SetTenantKey sets the "tenant_key" field.
 func (_u *ModelCategoryUpdate) SetTenantKey(v string) *ModelCategoryUpdate {
 	_u.mutation.SetTenantKey(v)
@@ -288,6 +308,12 @@ func (_u *ModelCategoryUpdate) sqlSave(ctx context.Context) (_node int, err erro
 			}
 		}
 	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(modelcategory.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(modelcategory.FieldDeletedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(modelcategory.FieldTenantKey, field.TypeString, value)
 	}
@@ -407,6 +433,26 @@ type ModelCategoryUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ModelCategoryMutation
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *ModelCategoryUpdateOne) SetDeletedAt(v time.Time) *ModelCategoryUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *ModelCategoryUpdateOne) SetNillableDeletedAt(v *time.Time) *ModelCategoryUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *ModelCategoryUpdateOne) ClearDeletedAt() *ModelCategoryUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetTenantKey sets the "tenant_key" field.
@@ -696,6 +742,12 @@ func (_u *ModelCategoryUpdateOne) sqlSave(ctx context.Context) (_node *ModelCate
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(modelcategory.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(modelcategory.FieldDeletedAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.TenantKey(); ok {
 		_spec.SetField(modelcategory.FieldTenantKey, field.TypeString, value)
